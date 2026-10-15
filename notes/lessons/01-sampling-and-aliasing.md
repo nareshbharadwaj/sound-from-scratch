@@ -1,7 +1,11 @@
 # Lesson 1: Sampling and aliasing
 
 Phase 1, week 2. Code: `src/sfs/signals.py`. Tests: `tests/test_signals.py`.
-Interactive demo: [Aliasing Lab](https://claude.ai/artifact/HNEgSgSjcnwo9fAVQivseJ).
+
+**Start here:** [How Sound Becomes Numbers](https://claude.ai/artifact/CTMTE6mSumB1BdVKi4vxHA),
+the step-by-step interactive lesson. Then try the
+[Aliasing Lab](https://claude.ai/artifact/HNEgSgSjcnwo9fAVQivseJ). These notes
+are the compact version, with a derivation and exercises to go further.
 
 ## The idea
 

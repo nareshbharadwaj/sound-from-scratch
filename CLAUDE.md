@@ -13,6 +13,18 @@ a session.
 
 ## How to teach here
 
+- Start every lesson from intuition, assuming no signal-processing or audio
+  background. One new idea per step, every term defined before it's used,
+  a picture or a sound for each step, analogies before formulas, and the
+  formula last. The owner found the first, formula-first draft of lesson 1
+  too hard to follow; the rewrite in `pages/lesson-01-sampling.html` is the
+  model to follow.
+- Each lesson is an interactive page in `pages/`, published as an artifact,
+  with a compact companion in `notes/lessons/`. Interactive tools (like the
+  Aliasing Lab) come after the lesson that explains them, never instead of
+  it. `pages/README.md` lists the published URLs.
+- On iPhone, play audio through an `<audio>` element with a WAV data URI,
+  not the Web Audio API, which is muted when the ringer switch is on silent.
 - Explain from first principles. Derive before you code: what is the
   quantity, why this formula, what would break without each term.
 - Ask the owner to predict a result before running the experiment, then run

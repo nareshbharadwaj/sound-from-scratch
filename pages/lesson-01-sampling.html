@@ -1,0 +1,629 @@
+<title>How Sound Becomes Numbers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column of numbered steps; each step ends in a small hands-on figure. Same tokens as the Aliasing Lab. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #151821;
+  --muted: #5a6273;
+  --line: #dde1e8;
+  --accent: #3245c4;
+  --accent-soft: #e6e9fa;
+  --alias: #c2410c;
+  --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.65 var(--body); }
+.wrap {
+  max-width: 40rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; }
+h2 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+p { margin: 0 0 14px; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.lede { font-size: 1.1rem; margin-top: 12px; }
+.meta { font: 400 0.85rem/1.5 var(--ui); color: var(--muted); margin-top: 10px; }
+
+.toc { margin-top: 20px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 400 0.92rem/1.6 var(--ui); }
+.toc ol { margin: 6px 0 0; padding-left: 1.4em; }
+
+.step { margin-top: 44px; scroll-margin-top: 12px; }
+.step-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.step-num { font: 500 0.85rem/1 var(--mono); color: var(--accent); flex: none; }
+
+.term { font-weight: 600; }
+.key {
+  margin: 16px 0; padding: 12px 14px; border-radius: 10px;
+  background: var(--accent-soft); font-size: 0.98rem;
+}
+.key strong { font-family: var(--ui); }
+.math {
+  font: 400 0.95rem/1.6 var(--mono); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 14px; margin: 14px 0; overflow-x: auto; white-space: nowrap;
+}
+.parts { display: grid; gap: 8px; margin: 12px 0 16px; padding: 0; list-style: none; }
+.parts li { display: grid; grid-template-columns: 4.6rem 1fr; gap: 10px; align-items: baseline; }
+.parts code { font: 500 0.9rem var(--mono); color: var(--accent); }
+
+.fig {
+  margin: 18px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; display: grid; gap: 12px; min-width: 0;
+}
+.fig canvas { width: 100%; height: 170px; display: block; }
+.fig canvas.tall { height: 200px; }
+.fig canvas.short { height: 120px; }
+.readout { font: 500 0.92rem/1.45 var(--ui); }
+.readout .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.readout.muted { color: var(--muted); font-weight: 400; }
+.control { display: grid; gap: 6px; }
+.control-head { display: flex; justify-content: space-between; gap: 8px; font: 500 0.85rem var(--ui); }
+.control-head output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn {
+  font: 500 0.88rem/1 var(--ui); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer;
+}
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.play { background: var(--alias-soft); border-color: transparent; }
+.status { font: 400 0.82rem/1.4 var(--ui); color: var(--muted); min-height: 1.1em; margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 0.8rem/1.3 var(--ui); color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+.legend .dot::before { width: 7px; height: 7px; border-radius: 50%; }
+
+.values { display: flex; flex-wrap: wrap; gap: 4px; font: 400 0.8rem/1 var(--mono); }
+.values span { padding: 5px 7px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+
+.frames { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.frames canvas { height: auto; aspect-ratio: 1; }
+
+.quiz { display: grid; gap: 10px; margin: 16px 0; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.q p { margin: 0; }
+.q .answer { border-top: 1px solid var(--line); padding-top: 10px; font-size: 0.96rem; }
+
+dl.gloss { display: grid; gap: 10px; margin: 14px 0 0; }
+dl.gloss dt { font: 600 0.95rem var(--ui); }
+dl.gloss dd { margin: 2px 0 0; color: var(--ink); }
+
+.next { margin-top: 18px; padding: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.next ul { margin: 8px 0 0; padding-left: 1.2em; }
+.next li { margin: 6px 0; }
+footer { margin-top: 48px; font: 400 0.82rem/1.5 var(--ui); color: var(--muted); }
+code { font: 400 0.88em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+</style>
+
+<main class="wrap">
+<header>
+  <div class="label">Sound From Scratch · Phase 1 · Lesson 1</div>
+  <h1 style="margin-top:8px">How Sound Becomes Numbers</h1>
+  <p class="lede">Every speech and music model works on lists of numbers. This lesson shows where those numbers come from, and the one way the process can trick your ears.</p>
+  <p class="meta">About 30 minutes. No math background needed: each idea comes with a picture or a sound. Headphones help.</p>
+  <nav class="toc" aria-label="Steps">
+    <div class="label">Steps</div>
+    <ol>
+      <li><a href="#s1">What sound is</a></li>
+      <li><a href="#s2">Frequency: how fast it wiggles</a></li>
+      <li><a href="#s3">The sine wave</a></li>
+      <li><a href="#s4">Sampling: turning a wave into numbers</a></li>
+      <li><a href="#s5">How many samples are enough?</a></li>
+      <li><a href="#s6">The wagon-wheel trick</a></li>
+      <li><a href="#s7">Aliasing: the same trick with sound</a></li>
+      <li><a href="#s8">The rule</a></li>
+      <li><a href="#s9">Why it matters for speech and music models</a></li>
+      <li><a href="#s10">Back to the lab</a></li>
+    </ol>
+  </nav>
+</header>
+
+<!-- 1 -->
+<section class="step" id="s1">
+  <div class="step-head"><span class="step-num">1</span><h2>What sound is</h2></div>
+  <p>When a guitar string vibrates, it pushes the air next to it back and forth. That push travels outwards as tiny ripples in air pressure. When the ripples reach your ear, your eardrum moves with them, and you hear sound.</p>
+  <p>A microphone does the same job as your eardrum: it measures the air pressure, moment by moment. If you draw that measurement over time, you get a <span class="term">waveform</span>. Up means the air is slightly squeezed, down means it's slightly stretched, and the middle line is still air.</p>
+  <div class="key"><strong>Key idea:</strong> sound is a quantity (air pressure) that changes over time. A waveform is just a graph of it.</div>
+</section>
+
+<!-- 2 -->
+<section class="step" id="s2">
+  <div class="step-head"><span class="step-num">2</span><h2>Frequency: how fast it wiggles</h2></div>
+  <p>The simplest sounds repeat the same shape over and over. The number of repeats per second is the <span class="term">frequency</span>, measured in <span class="term">hertz</span> (Hz). 440 Hz means 440 repeats every second.</p>
+  <p>Your ear hears frequency as <span class="term">pitch</span>: more repeats per second sounds higher. The height of the wave, its <span class="term">amplitude</span>, is heard as loudness. People hear roughly 20 Hz to 20,000 Hz; the top end drops with age.</p>
+  <div class="fig">
+    <canvas id="c-freq" aria-label="A wave drawn over 10 milliseconds"></canvas>
+    <p class="readout" id="r-freq"></p>
+    <div class="control">
+      <div class="control-head"><label for="i-freq">Frequency</label><output id="o-freq" for="i-freq"></output></div>
+      <input id="i-freq" type="range" min="50" max="2000" step="10" value="440">
+    </div>
+    <div class="control">
+      <div class="control-head"><label for="i-amp">Amplitude</label><output id="o-amp" for="i-amp"></output></div>
+      <input id="i-amp" type="range" min="0.1" max="1" step="0.05" value="0.8">
+    </div>
+    <div class="buttons"><button class="btn play" id="p-freq">Play this tone</button></div>
+    <p class="status" id="st-freq" aria-live="polite"></p>
+  </div>
+  <p>Try it: count the bumps at 100 Hz, then at 400 Hz. The picture always shows 10 milliseconds (a hundredth of a second), so a 100 Hz wave fits exactly 1 repeat, and 400 Hz fits 4.</p>
+</section>
+
+<!-- 3 -->
+<section class="step" id="s3">
+  <div class="step-head"><span class="step-num">3</span><h2>The sine wave</h2></div>
+  <p>The smooth wave in step 2 is a <span class="term">sine wave</span>, and it's the building block of every other sound. You can make one with a circle: put a dot on a spinning wheel and track only how high the dot is. Plotted over time, that height draws a sine wave.</p>
+  <div class="fig">
+    <canvas id="c-circle" class="tall" aria-label="A dot going round a circle, with its height traced out as a sine wave"></canvas>
+    <div class="buttons"><button class="btn" id="b-circle" aria-pressed="false">Play animation</button></div>
+  </div>
+  <p>One trip round the circle is one cycle of the wave. Mathematicians measure a full turn as 2π (about 6.28) instead of 360°. So a sine wave written as a formula is:</p>
+  <div class="math">height = A × sin(2π × f × t)</div>
+  <ul class="parts">
+    <li><code>t</code><span>the time, in seconds</span></li>
+    <li><code>f × t</code><span>how many cycles have happened by time t. At 440 Hz, after half a second, 220 cycles.</span></li>
+    <li><code>2π ×</code><span>turns cycles into an angle on the circle, since one cycle is one full turn</span></li>
+    <li><code>sin</code><span>the height of the dot at that angle, between −1 and 1</span></li>
+    <li><code>A</code><span>the amplitude, which scales the height</span></li>
+  </ul>
+  <div class="key"><strong>Key idea:</strong> a sine wave is a point going round a circle. Frequency is how many turns per second.</div>
+</section>
+
+<!-- 4 -->
+<section class="step" id="s4">
+  <div class="step-head"><span class="step-num">4</span><h2>Sampling: turning a wave into numbers</h2></div>
+  <p>A computer can't store a smooth curve. Instead it measures the wave's height at evenly spaced moments, like a camera taking photos at a steady rate. Each measurement is a <span class="term">sample</span>, and the number of samples per second is the <span class="term">sample rate</span>.</p>
+  <p>Below is a 500 Hz tone. The dots are the samples. The list underneath is everything the computer keeps; the smooth curve is thrown away.</p>
+  <div class="fig">
+    <canvas id="c-sample" aria-label="A 500 hertz wave with sample points marked"></canvas>
+    <div class="legend"><span style="--c: var(--accent)">The real wave</span><span class="dot" style="--c: var(--ink)">Samples</span></div>
+    <p class="readout" id="r-sample"></p>
+    <div class="control">
+      <div class="control-head"><label for="i-sr">Sample rate</label><output id="o-sr" for="i-sr"></output></div>
+      <input id="i-sr" type="range" min="1500" max="16000" step="500" value="4000">
+    </div>
+    <div><div class="label" style="margin-bottom:6px">The numbers the computer stores</div><div class="values" id="v-sample"></div></div>
+  </div>
+  <p>Real audio uses fast sample rates: 16,000 per second for many speech models, 44,100 for CDs. One second of CD audio is 44,100 numbers.</p>
+  <div class="key"><strong>Key idea:</strong> digital audio is a list of heights, measured at a fixed rate. Nothing between the dots is kept.</div>
+</section>
+
+<!-- 5 -->
+<section class="step" id="s5">
+  <div class="step-head"><span class="step-num">5</span><h2>How many samples are enough?</h2></div>
+  <p>If the computer only has the dots, can it tell what wave they came from? Here the sample rate is fixed at 8,000 per second. Raise the frequency and watch how many dots land on each cycle.</p>
+  <div class="fig">
+    <canvas id="c-enough" aria-label="A wave at a fixed sample rate, with its samples joined by straight lines"></canvas>
+    <div class="legend"><span style="--c: var(--accent)">The real wave</span><span class="dot" style="--c: var(--ink)">Samples</span><span style="--c: var(--muted)">Dots joined up</span></div>
+    <p class="readout" id="r-enough"></p>
+    <div class="control">
+      <div class="control-head"><label for="i-enough">Frequency</label><output id="o-enough" for="i-enough"></output></div>
+      <input id="i-enough" type="range" min="250" max="4000" step="50" value="500">
+    </div>
+    <div class="buttons"><button class="btn play" id="p-enough">Play the samples</button></div>
+    <p class="status" id="st-enough" aria-live="polite"></p>
+  </div>
+  <p>To show a wave going up and down, you need at least one sample near each peak and one near each dip: <strong>at least 2 samples per cycle</strong>. So a sample rate can only capture frequencies below half of itself. That limit is called the <span class="term">Nyquist frequency</span>.</p>
+  <ul class="parts">
+    <li><code>8,000</code><span>samples per second captures up to 4,000 Hz</span></li>
+    <li><code>16,000</code><span>captures up to 8,000 Hz, which is enough for clear speech</span></li>
+    <li><code>44,100</code><span>(CD) captures up to 22,050 Hz, just past the limit of human hearing. That's why CDs chose it.</span></li>
+  </ul>
+  <p>At exactly 4,000 Hz the slider shows something odd: every sample can land on the middle line, and the wave vanishes. That's why the limit is strictly <em>below</em> half the sample rate.</p>
+  <div class="key"><strong>Key idea:</strong> a sample rate can record frequencies up to half its value, the Nyquist frequency. Anything higher can't be told apart.</div>
+</section>
+
+<!-- 6 -->
+<section class="step" id="s6">
+  <div class="step-head"><span class="step-num">6</span><h2>The wagon-wheel trick</h2></div>
+  <p>So what happens to a frequency that's too high? You've probably seen the answer in films. Cameras take 24 photos per second. A wheel spinning fast can look like it's turning slowly, or even backwards. Each square below is one photo of a wheel with one spoke.</p>
+  <div class="fig">
+    <div class="frames" id="frames"></div>
+    <p class="readout" id="r-wheel"></p>
+    <div class="buttons" id="b-wheel" role="group" aria-label="Wheel speed">
+      <button class="btn" data-rps="3">3 turns/s</button>
+      <button class="btn" data-rps="12">12 turns/s</button>
+      <button class="btn" data-rps="23">23 turns/s</button>
+      <button class="btn" data-rps="24">24 turns/s</button>
+      <button class="btn" data-rps="25">25 turns/s</button>
+    </div>
+  </div>
+  <p>At 23 turns per second, the wheel turns almost a full circle between photos, so each photo shows the spoke slightly <em>behind</em> where it was. Your brain joins the photos up into the simplest motion: slowly backwards. The camera never sees the fast motion that actually happened.</p>
+</section>
+
+<!-- 7 -->
+<section class="step" id="s7">
+  <div class="step-head"><span class="step-num">7</span><h2>Aliasing: the same trick with sound</h2></div>
+  <p>Sampling is a camera for sound, so the same thing happens. Take a 7,000 Hz tone and sample it 8,000 times a second, which is above the 4,000 Hz limit. Between samples the wave goes through 7/8 of a cycle: almost a full turn, just like the wheel. The dots line up into a slow wave instead.</p>
+  <div class="fig">
+    <canvas id="c-alias" aria-label="A high tone, its samples, and the slower wave the samples trace"></canvas>
+    <div class="legend"><span style="--c: var(--accent)">The real tone</span><span class="dot" style="--c: var(--ink)">Samples</span><span style="--c: var(--alias)">The wave the dots trace</span></div>
+    <p class="readout" id="r-alias"></p>
+    <div class="buttons" id="b-alias" role="group" aria-label="Tone">
+      <button class="btn" data-f="1000">1,000 Hz</button>
+      <button class="btn" data-f="7000">7,000 Hz</button>
+      <button class="btn" data-f="9000">9,000 Hz</button>
+    </div>
+    <div class="buttons"><button class="btn play" id="p-alias">Play the samples</button></div>
+    <p class="status" id="st-alias" aria-live="polite"></p>
+  </div>
+  <p>Before tapping play: what pitch will 7,000 Hz sound like? Then compare it with 1,000 Hz. They sound identical, because the computer stored the same numbers. This disguise is called <span class="term">aliasing</span>: a too-high frequency shows up as a false, lower one, its <span class="term">alias</span>.</p>
+  <div class="key"><strong>Key idea:</strong> frequencies above Nyquist don't disappear. They come back disguised as lower frequencies, and nothing in the samples can tell you which one was real.</div>
+</section>
+
+<!-- 8 -->
+<section class="step" id="s8">
+  <div class="step-head"><span class="step-num">8</span><h2>The rule</h2></div>
+  <p>The wheel gives the rule away. A wheel turning 24 times per second looks frozen, because each photo catches it in the same place. So adding or removing 24 turns per second changes nothing in the photos. For sound, <strong>adding or removing the sample rate changes nothing in the samples</strong>.</p>
+  <p>So to find what you'll hear, slide the frequency up or down by whole sample rates until it's as close to zero as possible. Then ignore the sign: a wheel turning backwards at 1 turn per second looks just as slow as one turning forwards.</p>
+  <div class="math">heard = distance from f to the nearest multiple of the sample rate</div>
+  <p>At 8,000 samples per second, the multiples are 0, 8,000, 16,000 and so on. A 7,000 Hz tone is 1,000 away from 8,000, so you hear 1,000 Hz. A 9,000 Hz tone is also 1,000 away from 8,000: also 1,000 Hz. Predict these, then reveal:</p>
+  <div class="quiz">
+    <div class="q">
+      <p>A 5,000 Hz tone, sampled 8,000 times a second.</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">The nearest multiple is 8,000, which is 3,000 away, so you hear <strong>3,000 Hz</strong>. Just above the 4,000 Hz limit, the frequency folds back to just below it.</p>
+      </details>
+      <div class="buttons"><button class="btn play" data-play-f="5000" data-play-sr="8000">Play it sampled</button></div>
+    </div>
+    <div class="q">
+      <p>A 12,000 Hz tone, sampled 8,000 times a second.</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">12,000 is 4,000 away from both 8,000 and 16,000, so you hear <strong>4,000 Hz</strong>, right at the limit.</p>
+      </details>
+      <div class="buttons"><button class="btn play" data-play-f="12000" data-play-sr="8000">Play it sampled</button></div>
+    </div>
+    <div class="q">
+      <p>A 20,000 Hz tone on a CD, sampled 44,100 times a second.</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">A trick question: 20,000 Hz is below the CD's 22,050 Hz limit, so it's stored correctly and you hear <strong>20,000 Hz</strong>, if your ears can still reach that high.</p>
+      </details>
+    </div>
+    <p class="status" id="st-quiz" aria-live="polite"></p>
+  </div>
+  <p>Written as code, which is what <code>alias_frequency</code> does in the repo:</p>
+  <div class="math">heard = abs(f − sample_rate × round(f / sample_rate))</div>
+  <p><code>round(f / sample_rate)</code> picks the nearest multiple, the subtraction measures the distance, and <code>abs</code> drops the sign.</p>
+</section>
+
+<!-- 9 -->
+<section class="step" id="s9">
+  <div class="step-head"><span class="step-num">9</span><h2>Why it matters for speech and music models</h2></div>
+  <ul class="parts">
+    <li><code>Limits</code><span>Every model works at a fixed sample rate, and can never produce anything above half of it. A 16,000 Hz speech model can't make sounds above 8,000 Hz, which is part of why some synthetic voices sound slightly muffled.</span></li>
+    <li><code>Artifacts</code><span>Models that build audio step by step from a coarse sketch can accidentally create too-high frequencies, which fold back as faint metallic whistles. Vocoder papers in phase 4 work hard to avoid this.</span></li>
+    <li><code>Resampling</code><span>Converting audio to a lower sample rate means first removing everything above the new limit. Skip that, and the high frequencies alias.</span></li>
+  </ul>
+</section>
+
+<!-- 10 -->
+<section class="step" id="s10">
+  <div class="step-head"><span class="step-num">10</span><h2>Back to the lab</h2></div>
+  <p>You now have every idea the <a href="https://claude.ai/artifact/HNEgSgSjcnwo9fAVQivseJ">Aliasing Lab</a> uses. Here's what its parts show:</p>
+  <div class="next">
+    <ul>
+      <li><strong>Tone → Heard as</strong>: the frequency you chose, and its alias from step 8.</li>
+      <li><strong>What the samples see</strong>: the picture from step 7, showing 24 samples. Orange is the wave the samples trace.</li>
+      <li><strong>The fold</strong>: across the bottom, the tone you choose; up the side, the pitch you hear. The line rises until Nyquist, then folds back down to zero at the sample rate, then rises again, like a strip of paper folded into a zigzag. The blue dot is your current tone.</li>
+      <li><strong>Sample rate buttons</strong>: a higher rate moves the first fold further right, so more frequencies are stored correctly.</li>
+      <li><strong>Play a sweep</strong>: a tone gliding from 0 up to twice the sample rate. You hear it follow the zigzag: up, down, up, down.</li>
+    </ul>
+  </div>
+  <p style="margin-top:16px">When you're ready, the exercises in the lesson notes take each idea one step further.</p>
+</section>
+
+<section class="step" id="glossary">
+  <div class="step-head"><h2>Words from this lesson</h2></div>
+  <dl class="gloss">
+    <div><dt>Waveform</dt><dd>A graph of air pressure (or a microphone's reading) over time.</dd></div>
+    <div><dt>Frequency (Hz)</dt><dd>How many times per second a wave repeats. Heard as pitch.</dd></div>
+    <div><dt>Amplitude</dt><dd>The height of a wave. Heard as loudness.</dd></div>
+    <div><dt>Sine wave</dt><dd>The height of a point going round a circle, over time. The simplest possible tone.</dd></div>
+    <div><dt>Sample</dt><dd>One measurement of the wave's height at one instant.</dd></div>
+    <div><dt>Sample rate</dt><dd>How many samples are taken per second.</dd></div>
+    <div><dt>Nyquist frequency</dt><dd>Half the sample rate: the highest frequency that sample rate can record.</dd></div>
+    <div><dt>Aliasing</dt><dd>A frequency above Nyquist showing up disguised as a lower one, its alias.</dd></div>
+  </dl>
+</section>
+
+<footer>Code for this lesson: <code>src/sfs/signals.py</code>. Notes and exercises: <code>notes/lessons/01-sampling-and-aliasing.md</code>.</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = hz => `${Math.round(hz).toLocaleString("en-US")} Hz`;
+const alias = (f, sr) => Math.abs(f - sr * Math.round(f / sr));
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function colors() {
+  const s = getComputedStyle(document.documentElement);
+  const v = n => s.getPropertyValue(n).trim();
+  return { ink: v("--ink"), muted: v("--muted"), line: v("--line"), accent: v("--accent"), alias: v("--alias"), bg: v("--bg"), mono: v("--mono") };
+}
+
+function prep(canvas) {
+  const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+// One drawing routine for every wave figure on the page.
+function scene(canvas, o) {
+  const { ctx, w, h } = prep(canvas), c = colors();
+  const pad = 8, mid = (h - 14) / 2, ampPx = mid - 10;
+  const x = t => pad + (t / o.span) * (w - 2 * pad);
+  const y = v => mid - v * ampPx;
+  const A = o.amp ?? 1;
+  const line = (fn, steps, color, width, alpha = 1) => {
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.globalAlpha = alpha; ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const t = (i / steps) * o.span, v = fn(t);
+      i ? ctx.lineTo(x(t), y(v)) : ctx.moveTo(x(t), y(v));
+    }
+    ctx.stroke(); ctx.globalAlpha = 1;
+  };
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, mid); ctx.lineTo(w - pad, mid); ctx.stroke();
+
+  const wave = t => A * Math.sin(2 * Math.PI * o.f * t);
+  const fine = Math.max(600, Math.ceil(o.f * o.span * 30));
+  line(wave, fine, c.accent, o.sr ? 1.25 : 2.5, o.sr ? 0.6 : 1);
+
+  if (o.sr) {
+    const pts = [];
+    for (let i = 0; i / o.sr <= o.span + 1e-12; i++) pts.push([i / o.sr, wave(i / o.sr)]);
+    if (o.connect) {
+      ctx.strokeStyle = c.muted; ctx.lineWidth = 1.5; ctx.beginPath();
+      pts.forEach(([t, v], i) => i ? ctx.lineTo(x(t), y(v)) : ctx.moveTo(x(t), y(v)));
+      ctx.stroke();
+    }
+    if (o.showAlias) {
+      const signed = o.f - o.sr * Math.round(o.f / o.sr);
+      line(t => A * Math.sin(2 * Math.PI * signed * t), 600, c.alias, 2.5);
+    }
+    ctx.fillStyle = c.ink;
+    for (const [t, v] of pts) { ctx.beginPath(); ctx.arc(x(t), y(v), 3.5, 0, 2 * Math.PI); ctx.fill(); }
+  }
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`; ctx.textAlign = "right";
+  ctx.fillText(`${+(o.span * 1000).toFixed(2)} ms`, w - pad, h - 2);
+  ctx.textAlign = "left";
+  ctx.fillText("0", pad, h - 2);
+}
+
+// Audio: build a WAV file and play it with an <audio> element, which iOS
+// plays even when the ringer switch is on silent.
+function wavDataUri(samples, sr) {
+  const n = samples.length, bytes = new Uint8Array(44 + n * 2), v = new DataView(bytes.buffer);
+  const text = (o, s) => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
+  text(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); text(8, "WAVE");
+  text(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  text(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return "data:audio/wav;base64," + btoa(bin);
+}
+function tone(f, sr, seconds, amp = 0.3) {
+  const n = Math.round(seconds * sr), s = new Float32Array(n), fadeN = Math.round(0.02 * sr);
+  for (let i = 0; i < n; i++) {
+    const g = Math.min(1, i / fadeN, (n - 1 - i) / fadeN);
+    s[i] = amp * g * Math.sin(2 * Math.PI * f * i / sr);
+  }
+  return s;
+}
+const player = new Audio();
+let statusEl = null;
+player.addEventListener("ended", () => { if (statusEl) statusEl.textContent = ""; });
+function play(samples, sr, el, message) {
+  if (statusEl && statusEl !== el) statusEl.textContent = "";
+  statusEl = el;
+  player.pause(); player.src = wavDataUri(samples, sr);
+  el.textContent = "Starting…";
+  player.play().then(() => { el.textContent = message; })
+    .catch(err => { el.textContent = `Your browser didn't play the sound (${err.name}). Check the volume and tap again.`; });
+}
+
+// Step 2: frequency and amplitude
+const freqState = { f: 440, amp: 0.8 };
+function pitchNote(f) {
+  if (f < 100) return "a low hum, like a bass note";
+  if (f >= 430 && f <= 450) return "the A that orchestras tune to";
+  if (f < 300) return "around the pitch of a man's speaking voice";
+  if (f < 1000) return "a mid-range note, like singing";
+  return "a high whistle";
+}
+function drawFreq() {
+  const { f, amp } = freqState;
+  scene($("c-freq"), { f, amp, span: 0.01 });
+  $("o-freq").textContent = fmt(f);
+  $("o-amp").textContent = amp.toFixed(2);
+  const reps = f * 0.01;
+  $("r-freq").innerHTML = `<span class="num">${fmt(f)}</span> repeats <span class="num">${+reps.toFixed(1)}</span> times in 10 ms: ${pitchNote(f)}.`;
+}
+$("i-freq").addEventListener("input", e => { freqState.f = +e.target.value; drawFreq(); });
+$("i-amp").addEventListener("input", e => { freqState.amp = +e.target.value; drawFreq(); });
+$("p-freq").addEventListener("click", () => {
+  const { f, amp } = freqState;
+  play(tone(f, 48000, 1.5, 0.4 * amp), 48000, $("st-freq"), `Playing ${fmt(f)}.`);
+});
+
+// Step 3: circle to sine
+let circleAngle = 0.6, circleRunning = false, lastT = 0;
+const history = [];
+function drawCircle() {
+  const canvas = $("c-circle"), { ctx, w, h } = prep(canvas), c = colors();
+  const R = Math.min(h / 2 - 14, w * 0.17), cx = R + 12, cy = h / 2;
+  const x0 = cx + R + 20, x1 = w - 8;
+  // circle
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(x1, cy); ctx.stroke();
+  const px = cx + R * Math.cos(circleAngle), py = cy - R * Math.sin(circleAngle);
+  ctx.strokeStyle = c.muted; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+  // height marker
+  ctx.strokeStyle = c.alias; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, py); ctx.stroke();
+  // guide to trace
+  ctx.strokeStyle = c.line; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x0, py); ctx.stroke(); ctx.setLineDash([]);
+  // trace: newest value at x0, older values further right
+  const span = x1 - x0;
+  if (!history.length) for (let i = 0; i < 400; i++) history.push(Math.sin(circleAngle - i * 0.03));
+  ctx.strokeStyle = c.accent; ctx.lineWidth = 2.5; ctx.beginPath();
+  history.forEach((v, i) => {
+    const xx = x0 + (i / (history.length - 1)) * span, yy = cy - v * R;
+    i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
+  });
+  ctx.stroke();
+  ctx.fillStyle = c.ink;
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, 2 * Math.PI); ctx.fill();
+  ctx.fillStyle = c.accent;
+  ctx.beginPath(); ctx.arc(x0, py, 4, 0, 2 * Math.PI); ctx.fill();
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`; ctx.textAlign = "left";
+  ctx.fillText("height over time →", x0 + 6, h - 4);
+}
+function tick(now) {
+  if (!circleRunning) return;
+  const dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0;
+  lastT = now;
+  const step = 2 * Math.PI * 0.35 * dt;          // 0.35 turns per second
+  circleAngle += step;
+  const per = Math.max(1, Math.round(step / 0.03));
+  for (let k = per; k >= 1; k--) history.unshift(Math.sin(circleAngle - (k - 1) * 0.03));
+  history.length = 400;
+  drawCircle();
+  requestAnimationFrame(tick);
+}
+$("b-circle").addEventListener("click", e => {
+  circleRunning = !circleRunning;
+  e.currentTarget.setAttribute("aria-pressed", String(circleRunning));
+  e.currentTarget.textContent = circleRunning ? "Pause animation" : "Play animation";
+  if (circleRunning) { lastT = 0; requestAnimationFrame(tick); }
+});
+
+// Step 4: sampling
+const SAMPLE_F = 500;
+let sampleSr = 4000;
+function drawSample() {
+  scene($("c-sample"), { f: SAMPLE_F, span: 0.004, sr: sampleSr });
+  $("o-sr").textContent = `${sampleSr.toLocaleString("en-US")} per second`;
+  const gap = 1000 / sampleSr;
+  $("r-sample").innerHTML = `One sample every <span class="num">${+gap.toFixed(3)}</span> ms, so <span class="num">${+(sampleSr / SAMPLE_F).toFixed(1)}</span> samples per cycle of the 500 Hz wave.`;
+  const vals = [];
+  for (let i = 0; i < 12; i++) vals.push(Math.sin(2 * Math.PI * SAMPLE_F * i / sampleSr));
+  $("v-sample").innerHTML = vals.map(v => `<span>${(v >= 0 ? " " : "") + v.toFixed(3)}</span>`).join("") + "<span>…</span>";
+}
+$("i-sr").addEventListener("input", e => { sampleSr = +e.target.value; drawSample(); });
+
+// Step 5: how many samples are enough
+let enoughF = 500;
+function drawEnough() {
+  scene($("c-enough"), { f: enoughF, span: 0.002, sr: 8000, connect: true });
+  $("o-enough").textContent = fmt(enoughF);
+  const per = 8000 / enoughF;
+  let verdict;
+  if (per >= 6) verdict = "plenty: the joined-up dots look just like the wave.";
+  else if (per >= 2.5) verdict = "rough, but the dots still go up and down at the right rate.";
+  else if (per > 2) verdict = "very close to the limit. The dots still alternate up and down, but they're starting to lose the shape.";
+  else verdict = "exactly the limit. Here every sample lands on the middle line, and the wave vanishes completely.";
+  $("r-enough").innerHTML = `<span class="num">${+per.toFixed(2)}</span> samples per cycle: ${verdict}`;
+}
+$("i-enough").addEventListener("input", e => { enoughF = +e.target.value; drawEnough(); });
+$("p-enough").addEventListener("click", () => {
+  play(tone(enoughF, 8000, 1.5), 8000, $("st-enough"), `Playing ${fmt(enoughF)} sampled 8,000 times a second.`);
+});
+
+// Step 6: wagon wheel
+let wheelRps = 23;
+function drawWheel() {
+  const holder = $("frames");
+  if (!holder.children.length) for (let i = 0; i < 8; i++) {
+    const cv = document.createElement("canvas");
+    cv.setAttribute("aria-label", `Photo ${i + 1}`);
+    holder.appendChild(cv);
+  }
+  const c = colors();
+  [...holder.children].forEach((cv, k) => {
+    const { ctx, w, h } = prep(cv), r = Math.min(w, h) / 2 - 3, cx = w / 2, cy = h / 2;
+    ctx.fillStyle = c.bg; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = c.muted; ctx.lineWidth = 1.5; ctx.stroke();
+    const a = Math.PI / 2 - 2 * Math.PI * wheelRps * k / 24;   // clockwise from the top
+    ctx.strokeStyle = c.alias; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + r * 0.85 * Math.cos(a), cy - r * 0.85 * Math.sin(a)); ctx.stroke();
+  });
+  for (const b of $("b-wheel").children) b.setAttribute("aria-pressed", String(+b.dataset.rps === wheelRps));
+  const turn = wheelRps / 24, seen = wheelRps - 24 * Math.round(wheelRps / 24);
+  let looks;
+  if (seen === 0) looks = "the spoke is in the same place in every photo, so the wheel looks frozen.";
+  else if (Math.abs(turn - 0.5) < 1e-9) looks = "the spoke flips between top and bottom, so you can't tell which way it turns. Two photos per turn is the limit, just like 2 samples per cycle.";
+  else if (seen < 0) looks = `the spoke seems to slip back a little each photo, so it looks like ${Math.abs(seen)} turn${Math.abs(seen) === 1 ? "" : "s"} per second <strong>backwards</strong>.`;
+  else if (seen !== wheelRps) looks = `the spoke seems to creep forward slightly, so it looks like only ${seen} turn per second.`;
+  else looks = "the spoke moves a small, clear step each photo, so you see the true motion.";
+  $("r-wheel").innerHTML = `Between photos the wheel turns <span class="num">${+turn.toFixed(3)}</span> of a circle: ${looks}`;
+}
+$("b-wheel").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  wheelRps = +b.dataset.rps; drawWheel();
+});
+
+// Step 7: aliasing
+let aliasF = 7000;
+function drawAlias() {
+  const sr = 8000, above = aliasF > sr / 2;
+  scene($("c-alias"), { f: aliasF, span: 24 / sr, sr, showAlias: above });
+  for (const b of $("b-alias").children) b.setAttribute("aria-pressed", String(+b.dataset.f === aliasF));
+  const cyc = aliasF / sr;
+  $("r-alias").innerHTML = above
+    ? `Between samples the tone goes through <span class="num">${+cyc.toFixed(3)}</span> cycles. The samples trace a <span class="num">${fmt(alias(aliasF, sr))}</span> wave.`
+    : `<span class="num">${fmt(aliasF)}</span> is below the 4,000 Hz limit, so the samples follow the real tone.`;
+}
+$("b-alias").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  aliasF = +b.dataset.f; drawAlias();
+});
+$("p-alias").addEventListener("click", () => {
+  play(tone(aliasF, 8000, 1.5), 8000, $("st-alias"), `Playing ${fmt(aliasF)} sampled 8,000 times a second.`);
+});
+
+// Step 8: quiz playback
+document.querySelectorAll("[data-play-f]").forEach(b => b.addEventListener("click", () => {
+  const f = +b.dataset.playF, sr = +b.dataset.playSr;
+  play(tone(f, sr, 1.5), sr, $("st-quiz"), `Playing ${fmt(f)} sampled ${sr.toLocaleString("en-US")} times a second.`);
+}));
+
+function drawAll() { drawFreq(); drawCircle(); drawSample(); drawEnough(); drawWheel(); drawAlias(); }
+let raf = 0;
+const redraw = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(drawAll); };
+window.addEventListener("resize", redraw);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+drawAll();
+</script>

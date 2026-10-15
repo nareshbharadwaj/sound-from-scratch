@@ -26,7 +26,8 @@ Full plan: https://claude.ai/artifact/ExAUhat1xmLmzwM5tV3ZCE
 | `src/sfs/` | From-scratch implementations, one module per topic |
 | `tests/` | Tests, including checks that the theory holds |
 | `modal_jobs/` | GPU jobs, run with `modal run` |
-| `notes/lessons/` | Lesson write-ups |
+| `pages/` | Interactive lesson pages and tools (published URLs in `pages/README.md`) |
+| `notes/lessons/` | Lesson notes and exercises |
 | `notes/papers/` | One analysis per paper |
 | `notes/log.md` | Learning log |
 

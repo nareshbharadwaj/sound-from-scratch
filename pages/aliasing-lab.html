@@ -1,0 +1,381 @@
+<title>Aliasing Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single column instrument panel. Readout on top, two plots, then controls; matches the Sound From Scratch plan. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #151821;
+  --muted: #5a6273;
+  --line: #dde1e8;
+  --accent: #3245c4;
+  --accent-soft: #e6e9fa;
+  --alias: #c2410c;
+  --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--body); }
+.wrap {
+  max-width: 44rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  display: grid; gap: 18px;
+}
+h1 { font: 700 1.9rem/1.1 var(--display); letter-spacing: -0.02em; margin: 0; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+p { margin: 0; }
+.intro { color: var(--muted); max-width: 38rem; }
+
+.readout {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+}
+.freq { display: grid; gap: 4px; min-width: 0; }
+.freq .val { font: 500 clamp(1.3rem, 6vw, 1.9rem)/1 var(--mono); font-variant-numeric: tabular-nums; }
+.freq.true .val { color: var(--accent); }
+.freq.heard .val { color: var(--alias); }
+.freq.heard { text-align: right; }
+.to { font: 500 1.3rem var(--ui); color: var(--muted); }
+.verdict { grid-column: 1 / -1; font: 500 0.92rem/1.4 var(--ui); color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+.verdict strong { color: var(--ink); }
+
+.plot { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+canvas { width: 100%; display: block; }
+#wave { height: 190px; }
+#fold { height: 170px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 0.8rem/1.3 var(--ui); color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+.legend .dot::before { width: 7px; height: 7px; border-radius: 50%; }
+
+.controls { display: grid; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.field { display: grid; gap: 8px; }
+.field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.field-head output { font: 500 0.9rem var(--mono); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button, .presets button, .play button {
+  font: 500 0.88rem/1 var(--ui); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.play { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.play button { border-radius: 10px; padding: 12px; text-align: left; line-height: 1.3; }
+.play button strong { display: block; font-weight: 600; }
+.play button span { color: var(--muted); font-size: 0.8rem; }
+.play button.primary { background: var(--alias-soft); border-color: transparent; }
+.status { font: 400 0.82rem var(--ui); color: var(--muted); min-height: 1.2em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.foot { font: 400 0.85rem/1.5 var(--ui); color: var(--muted); }
+code { font: 400 0.85em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+</style>
+
+<main class="wrap">
+  <header style="display:grid;gap:8px">
+    <div class="label">Sound From Scratch · Lesson 1</div>
+    <h1>Aliasing Lab</h1>
+    <p class="intro">Sampling keeps only snapshots of a wave. Push a tone past half the sample rate and those snapshots trace a different, lower tone. Move the slider and listen.</p>
+  </header>
+
+  <section class="readout" aria-live="polite">
+    <div class="freq true"><span class="label">Tone</span><span class="val" id="r-true">7,000 Hz</span></div>
+    <span class="to" aria-hidden="true">→</span>
+    <div class="freq heard"><span class="label">Heard as</span><span class="val" id="r-heard">1,000 Hz</span></div>
+    <p class="verdict" id="verdict"></p>
+  </section>
+
+  <section class="plot">
+    <div class="label">What the samples see</div>
+    <canvas id="wave" aria-label="The tone, its samples, and the slower wave the samples also fit"></canvas>
+    <div class="legend">
+      <span style="--c: var(--accent)">Real tone</span>
+      <span class="dot" style="--c: var(--ink)">Samples</span>
+      <span style="--c: var(--alias)">Wave you hear</span>
+    </div>
+  </section>
+
+  <section class="plot">
+    <div class="label">The fold</div>
+    <canvas id="fold" aria-label="Heard frequency plotted against real frequency, folding at every multiple of half the sample rate"></canvas>
+    <div class="legend">
+      <span style="--c: var(--alias)">Heard frequency</span>
+      <span style="--c: var(--muted)">Nyquist, half the sample rate</span>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div class="field">
+      <div class="field-head"><label class="label" for="freq">Tone frequency</label><output id="freq-out" for="freq">7,000 Hz</output></div>
+      <input id="freq" type="range" min="0" max="24000" step="10" value="7000">
+    </div>
+    <div class="field">
+      <span class="label" id="sr-label">Sample rate</span>
+      <div class="seg" role="group" aria-labelledby="sr-label" id="sr">
+        <button data-sr="8000" aria-pressed="true">8 kHz</button>
+        <button data-sr="16000" aria-pressed="false">16 kHz</button>
+        <button data-sr="22050" aria-pressed="false">22.05 kHz</button>
+        <button data-sr="44100" aria-pressed="false">44.1 kHz</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="label">Try these</span>
+      <div class="presets">
+        <button data-f="1000" data-sr="8000">1 kHz at 8 kHz</button>
+        <button data-f="7000" data-sr="8000">7 kHz at 8 kHz</button>
+        <button data-f="4400" data-sr="8000">Just past Nyquist</button>
+        <button data-f="8000" data-sr="8000">Exactly the sample rate</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="label">Listen</span>
+      <div class="play">
+        <button class="primary" id="play-sampled"><strong>Play the samples</strong><span>The tone, sampled at your rate</span></button>
+        <button id="play-true"><strong>Play the real tone</strong><span>At 48 kHz, for comparison</span></button>
+        <button id="play-chirp"><strong>Play a sweep</strong><span>0 Hz up to twice the sample rate</span></button>
+      </div>
+      <p class="status" id="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <p class="foot">Heard frequency = | f − sr · round(f / sr) |. The same formula is <code>alias_frequency</code> in <code>src/sfs/signals.py</code>. Lesson notes: <code>notes/lessons/01-sampling-and-aliasing.md</code>.</p>
+</main>
+
+<script>
+const state = { f: 7000, sr: 8000 };
+const $ = id => document.getElementById(id);
+const fmt = hz => `${Math.round(hz).toLocaleString("en-US")} Hz`;
+const alias = (f, sr) => Math.abs(f - sr * Math.round(f / sr));
+
+function colors() {
+  const s = getComputedStyle(document.documentElement);
+  const v = n => s.getPropertyValue(n).trim();
+  return { ink: v("--ink"), muted: v("--muted"), line: v("--line"), accent: v("--accent"), alias: v("--alias"), mono: v("--mono") };
+}
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawWave() {
+  const { ctx, w, h } = setupCanvas($("wave"));
+  const c = colors();
+  const { f, sr } = state;
+  const heard = alias(f, sr);
+  const n = 24;                        // samples shown
+  const span = n / sr;                 // seconds shown
+  const pad = 8, mid = h / 2, amp = h / 2 - 16;
+  const x = t => pad + (t / span) * (w - 2 * pad);
+  const y = v => mid - v * amp;
+
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, mid); ctx.lineTo(w - pad, mid); ctx.stroke();
+
+  // The real tone, drawn finely enough to show every wiggle.
+  const steps = Math.max(600, Math.ceil((f * span) * 24));
+  ctx.strokeStyle = c.accent; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.25;
+  ctx.beginPath();
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * span;
+    const v = Math.sin(2 * Math.PI * f * t);
+    i ? ctx.lineTo(x(t), y(v)) : ctx.moveTo(x(t), y(v));
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // The low-frequency wave through the same samples. Its sign matches
+  // whichever image (f - k*sr) the tone folds onto.
+  const k = Math.round(f / sr);
+  const signed = f - k * sr;
+  ctx.strokeStyle = c.alias; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i = 0; i <= 600; i++) {
+    const t = (i / 600) * span;
+    const v = Math.sin(2 * Math.PI * signed * t);
+    i ? ctx.lineTo(x(t), y(v)) : ctx.moveTo(x(t), y(v));
+  }
+  ctx.stroke();
+
+  // Samples.
+  ctx.fillStyle = c.ink;
+  for (let i = 0; i < n; i++) {
+    const t = i / sr;
+    const v = Math.sin(2 * Math.PI * f * t);
+    ctx.beginPath(); ctx.arc(x(t), y(v), 3.5, 0, 2 * Math.PI); ctx.fill();
+  }
+
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+  ctx.textAlign = "right";
+  ctx.fillText(`${(span * 1000).toFixed(2)} ms · ${n} samples`, w - pad, h - 3);
+  ctx.textAlign = "left";
+  ctx.fillText(heard < 1 ? "heard: silence (constant)" : "", pad, 12);
+}
+
+function drawFold() {
+  const { ctx, w, h } = setupCanvas($("fold"));
+  const c = colors();
+  const { f, sr } = state;
+  const fMax = 24000, nyq = sr / 2;
+  const left = 8, right = w - 8, top = 12, bottom = h - 22;
+  const x = hz => left + (hz / fMax) * (right - left);
+  const yMax = 22050;  // fixed so the fold height visibly changes with the sample rate
+  const y = hz => bottom - (hz / yMax) * (bottom - top);
+
+  // Nyquist folds.
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+  ctx.fillStyle = c.muted; ctx.font = `10px ${c.mono}`; ctx.textAlign = "center";
+  for (let m = 1; m * nyq <= fMax; m++) {
+    ctx.beginPath(); ctx.moveTo(x(m * nyq), top); ctx.lineTo(x(m * nyq), bottom); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+
+  // Axis labels every 4 kHz.
+  for (let hz = 0; hz <= fMax; hz += 4000) ctx.fillText(`${hz / 1000}k`, Math.min(Math.max(x(hz), left + 8), right - 8), h - 6);
+
+  // Heard frequency as a function of real frequency: a triangle wave.
+  ctx.strokeStyle = c.alias; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i = 0; i <= 800; i++) {
+    const hz = (i / 800) * fMax;
+    i ? ctx.lineTo(x(hz), y(alias(hz, sr))) : ctx.moveTo(x(hz), y(alias(hz, sr)));
+  }
+  ctx.stroke();
+
+  // Nyquist label.
+  ctx.fillStyle = c.muted; ctx.textAlign = "left";
+  ctx.fillText(`Nyquist ${nyq / 1000}k`, Math.min(x(nyq) + 4, right - 70), top + 8);
+
+  // Current point.
+  const px = x(f), py = y(alias(f, sr));
+  ctx.strokeStyle = c.accent; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(px, bottom); ctx.lineTo(px, py); ctx.stroke();
+  ctx.fillStyle = c.accent;
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, 2 * Math.PI); ctx.fill();
+}
+
+function update() {
+  const { f, sr } = state;
+  const heard = alias(f, sr), nyq = sr / 2;
+  $("r-true").textContent = fmt(f);
+  $("r-heard").textContent = fmt(heard);
+  $("freq-out").textContent = fmt(f);
+  $("freq").value = f;
+  for (const b of $("sr").querySelectorAll("button")) b.setAttribute("aria-pressed", String(+b.dataset.sr === sr));
+  let verdict;
+  if (f < nyq) verdict = `<strong>Below Nyquist (${fmt(nyq)}).</strong> The samples capture this tone exactly.`;
+  else if (f === nyq) verdict = `<strong>Exactly at Nyquist.</strong> Two samples per cycle: the edge case, where the result depends on where the samples land.`;
+  else if (heard < 1) verdict = `<strong>A whole multiple of the sample rate.</strong> Every sample lands on the same point of the cycle, so the tone looks constant: silence.`;
+  else verdict = `<strong>Above Nyquist (${fmt(nyq)}).</strong> The tone folds back and the samples trace a ${fmt(heard)} wave instead.`;
+  $("verdict").innerHTML = verdict;
+  drawWave(); drawFold();
+}
+
+// Controls
+$("freq").addEventListener("input", e => { state.f = +e.target.value; update(); });
+$("sr").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.sr = +b.dataset.sr; update();
+});
+document.querySelector(".presets").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.f = +b.dataset.f; state.sr = +b.dataset.sr; update();
+});
+
+// Audio. The samples become a WAV file played by an ordinary <audio>
+// element. iOS mutes the Web Audio API when the ringer switch is on silent,
+// but media playback still sounds, like a video would. A WAV file at the
+// chosen sample rate also means the phone's own converter does the
+// reconstruction, exactly as it would for a real recording at that rate.
+function wavDataUri(samples, sr) {
+  const n = samples.length, bytes = new Uint8Array(44 + n * 2), v = new DataView(bytes.buffer);
+  const text = (o, s) => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
+  text(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); text(8, "WAVE");
+  text(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  text(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return "data:audio/wav;base64," + btoa(bin);
+}
+
+function fade(samples, sr) {
+  const n = Math.min(samples.length >> 1, Math.round(0.02 * sr));
+  for (let i = 0; i < n; i++) { const g = i / n; samples[i] *= g; samples[samples.length - 1 - i] *= g; }
+  return samples;
+}
+
+const player = new Audio();
+player.addEventListener("ended", () => { $("status").textContent = ""; });
+
+function play(samples, sr, message) {
+  player.pause();
+  player.src = wavDataUri(fade(samples, sr), sr);
+  $("status").textContent = "Starting…";
+  player.play()
+    .then(() => { $("status").textContent = message; })
+    .catch(err => {
+      $("status").textContent = `Your browser didn't play the sound (${err.name}: ${err.message}). Check that the volume is up, then tap again.`;
+    });
+}
+
+function tone(f, sr, seconds) {
+  const n = Math.round(seconds * sr), s = new Float32Array(n);
+  for (let i = 0; i < n; i++) s[i] = 0.3 * Math.sin(2 * Math.PI * f * i / sr);
+  return s;
+}
+
+$("play-sampled").addEventListener("click", () => {
+  const { f, sr } = state;
+  play(tone(f, sr, 1.5), sr, `Playing ${fmt(f)} sampled at ${fmt(sr)}. You should hear ${fmt(alias(f, sr))}.`);
+});
+
+$("play-true").addEventListener("click", () => {
+  const { f } = state, out = 48000;
+  const note = f > 16000 ? " Above about 16 kHz, many adults hear little or nothing." : "";
+  play(tone(f, out, 1.5), out, `Playing ${fmt(f)} at ${fmt(out)}, fast enough to capture it.${note}`);
+});
+
+$("play-chirp").addEventListener("click", () => {
+  const { sr } = state, dur = 4, n = Math.round(dur * sr), s = new Float32Array(n), k = (2 * sr) / dur;
+  for (let i = 0; i < n; i++) { const t = i / sr; s[i] = 0.3 * Math.sin(2 * Math.PI * (0.5 * k * t * t)); }
+  play(s, sr, `Sweeping 0 to ${fmt(2 * sr)} at ${fmt(sr)}. The pitch rises and falls twice: up to Nyquist, fold, down to zero, and again.`);
+});
+
+// Redraw on resize and theme change.
+let raf = 0;
+const redraw = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { drawWave(); drawFold(); }); };
+window.addEventListener("resize", redraw);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+
+update();
+</script>
