@@ -1,6 +1,7 @@
 # Lesson 1: Sampling and aliasing
 
 Phase 1, week 2. Code: `src/sfs/signals.py`. Tests: `tests/test_signals.py`.
+Interactive demo: [Aliasing Lab](https://claude.ai/artifact/HNEgSgSjcnwo9fAVQivseJ).
 
 ## The idea
 
