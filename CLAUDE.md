@@ -48,6 +48,8 @@ a session.
   explicitly; never assume a default.
 - Generated audio goes in `outputs/` (git-ignored).
 - Run `pytest -q` before every commit. CI runs it too.
+- Commit and push straight to `main`; the owner doesn't want branches or
+  pull requests for this repo.
 
 ## Compute
 
