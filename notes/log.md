@@ -2,6 +2,30 @@
 
 Newest entry first.
 
+## Week 3: lesson 3 ready
+
+- Lesson 3, windows, the STFT and spectrograms, as an interactive page
+  (`pages/lesson-03-stft.html`): one spectrum can't tell low-then-high from
+  high-then-low; frames; Hann windows; overlap and the hop; the
+  spectrogram; a real voice in decibels; reading stripes (harmonics),
+  bands (formants), hiss and gaps; the time–frequency tradeoff; inverse
+  STFT, and what random phase sounds like. Notes and derivations in
+  `notes/lessons/03-stft-and-spectrograms.md`.
+- Code: `src/sfs/stft.py` (`hann`, `frame_signal`, `stft`, `istft`,
+  `amplitude_to_db`, `frame_times`) on top of lesson 2's FFT. Tests check
+  it against NumPy and check what the theory predicts: windows at hop N/2
+  and N/4 add up flat, exact reconstruction, the spectrogram tells A from
+  B, and the time–frequency tradeoff.
+- Code walkthrough: `pages/code-03-stft.html`. The code-page builder is now
+  shared (`pages/src/codepage.py`, `code-page.css`).
+- Voice clip: LibriSpeech 198-209-0000 (CC BY 4.0), 2.6 s excerpt in
+  `pages/src/assets/`. Only GitHub was reachable from the session, so it
+  came from librosa's example data; checksum matches librosa's registry.
+  No transcript, so the lesson points at features, not words.
+
+Next: work through the page, then the exercises (exercise 1 records the
+owner's own voice). Lesson 4: the mel scale and mel spectrograms.
+
 ## Week 2: lesson 2 ready
 
 - Lesson 2, the Fourier transform, as an interactive page

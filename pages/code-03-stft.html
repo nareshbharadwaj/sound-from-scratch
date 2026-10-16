@@ -1,0 +1,286 @@
+<title>Reading stft.py</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; each function is a section with its code (wrapped to the phone's width), a line-by-line reading, and a real run behind a reveal. Same tokens as the lessons. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #151821;
+  --muted: #5a6273;
+  --line: #dde1e8;
+  --accent: #3245c4;
+  --accent-soft: #e6e9fa;
+  --alias: #c2410c;
+  --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.65 var(--body); }
+.wrap {
+  max-width: 40rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; }
+h2 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1rem; font-weight: 600; margin-top: 18px; margin-bottom: 8px; }
+p { margin: 0 0 14px; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.lede { font-size: 1.1rem; margin-top: 12px; }
+.meta { font: 400 0.85rem/1.5 var(--ui); color: var(--muted); margin-top: 10px; }
+.toc { margin-top: 20px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 400 0.92rem/1.6 var(--ui); }
+.toc ol { margin: 6px 0 0; padding-left: 1.4em; }
+.toc code { background: none; padding: 0; }
+
+.step { margin-top: 44px; scroll-margin-top: 12px; }
+.step-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.step-num { font: 500 0.85rem/1 var(--mono); color: var(--accent); flex: none; }
+.term { font-weight: 600; }
+.key { margin: 16px 0; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); font-size: 0.98rem; }
+.key strong { font-family: var(--ui); }
+
+/* Code: every line wraps to the screen, with a hanging indent so wrapped
+   continuations sit further right than the line they belong to. */
+.code {
+  margin: 14px 0; padding: 12px 12px 12px 10px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; font: 400 0.8rem/1.55 var(--mono); counter-reset: ln;
+  font-variant-ligatures: none;
+}
+.code .ln {
+  display: block; position: relative; white-space: pre-wrap; overflow-wrap: anywhere;
+  padding-left: calc(2.6em + var(--i, 0) * 1ch + 2ch); text-indent: -2ch;
+}
+.code .ln::before {
+  counter-increment: ln; content: counter(ln); position: absolute; left: 0; width: 1.8em; text-align: right;
+  text-indent: 0; color: var(--muted); opacity: 0.6;
+}
+.code .ln.blank { min-height: 0.8em; }
+.code .kw { color: var(--accent); font-weight: 500; }
+.code .cm { color: var(--muted); font-style: italic; }
+.code .fn { color: var(--alias); }
+
+.lines { display: grid; gap: 10px; margin: 12px 0 16px; padding: 0; list-style: none; }
+.lines li { display: grid; grid-template-columns: 3rem 1fr; gap: 8px; align-items: baseline; }
+.lines .n { font: 500 0.8rem var(--mono); color: var(--accent); text-align: right; }
+.lines li > span:last-child { min-width: 0; }
+
+.newpy { margin: 12px 0; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 10px; font-size: 0.95rem; }
+.newpy dl { margin: 6px 0 0; display: grid; gap: 8px; }
+.newpy dt { font: 500 0.88rem var(--mono); color: var(--accent); }
+.newpy dd { margin: 0; }
+
+code { font: 400 0.86em var(--mono); font-variant-ligatures: none; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+.run { margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+.run p { margin: 0; }
+.run .label { color: var(--alias); }
+.out { font: 400 0.82rem/1.6 var(--mono); background: var(--bg); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reveal { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 10px; }
+summary.btn { display: inline-block; list-style: none; }
+summary.btn::-webkit-details-marker { display: none; }
+.btn {
+  font: 500 0.88rem/1 var(--ui); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer;
+}
+.btn.play { background: var(--alias-soft); border-color: transparent; }
+details[open] > summary.btn { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.status { font: 400 0.82rem/1.4 var(--ui); color: var(--muted); min-height: 1.1em; margin: 0; }
+
+.fig { margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.fig canvas { width: 100%; height: 260px; display: block; }
+.caption { font: 400 0.85rem/1.45 var(--ui); color: var(--muted); margin: 0; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font: 400 0.86rem/1.4 var(--ui); font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+
+footer { margin-top: 48px; font: 400 0.82rem/1.5 var(--ui); color: var(--muted); }
+</style>
+
+<main class="wrap">
+<header>
+  <div class="label">Sound From Scratch · Lesson 3 · Code</div>
+  <h1 style="margin-top:8px">Reading stft.py</h1>
+  <p class="lede">The code behind lesson 3, one function at a time: what each line does, and what comes out when it runs.</p>
+  <p class="meta">You never need to run anything yourself. Claude ran every example on this page, and the outputs are real. To try a different input, ask in the chat. Docstrings are left out below; they repeat the explanations.</p>
+  <nav class="toc" aria-label="Functions">
+    <div class="label">On this page</div>
+    <ol>
+      <li><a href="#hann"><code>hann</code>: the fade</a></li>
+      <li><a href="#frames"><code>frame_signal</code>: cutting into frames</a></li>
+      <li><a href="#stft"><code>stft</code>: a spectrum per frame</a></li>
+      <li><a href="#istft"><code>istft</code>: back to sound</a></li>
+      <li><a href="#db"><code>amplitude_to_db</code> and <code>frame_times</code></a></li>
+    </ol>
+  </nav>
+</header>
+
+<section class="step" id="hann">
+  <div class="step-head"><span class="step-num">1</span><h2><code>hann</code>: the fade</h2></div>
+  <p>Lesson 3's window, as a formula: one cycle of a cosine, flipped and lifted so it runs from 0 up to 1 and back.</p>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> hann(n_fft):</span><span class="ln" style="--i:4">n = np.arange(n_fft)</span><span class="ln" style="--i:4"><span class="kw">return</span> 0.5 - 0.5 * np.cos(2 * np.pi * n / n_fft)</span></div>
+  <ol class="lines">
+    <li><span class="n">2</span><span>The sample numbers 0 … N−1.</span></li>
+    <li><span class="n">3</span><span>At n = 0 the cosine is 1, so w = 0. At n = N/2 it's −1, so w = 1. Because n stops at N−1, the window never quite returns to 0 at the end: it's one sample short of a full cycle. That's on purpose, as the run shows.</span></li>
+  </ol>
+  <div class="run">
+    <div class="label">Run it</div>
+    <p><code>hann(8)</code> gives 8 heights. Then add the first four to the last four, which is what two frames overlapping by half do. Predict the sums.</p>
+    <details><summary class="btn">Show the output</summary>
+      <div class="reveal" style="margin-top:10px">
+        <div class="out">&gt;&gt;&gt; w = hann(8)
+[0, 0.146, 0.5, 0.854, 1, 0.854, 0.5, 0.146]
+&gt;&gt;&gt; w[:4] + w[4:]
+[1, 1, 1, 1]</div>
+        <p>Exactly flat: lesson 3's step 4, in numbers. Each pair adds to 1 because 0.5 − 0.5·cos(θ) and 0.5 − 0.5·cos(θ + π) = 0.5 + 0.5·cos(θ) sum to 1. If the window ended with a 0 at both ends (the "symmetric" version NumPy's <code>np.hanning</code> makes), the cycle would be stretched by one sample and the sums would wobble slightly.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="step" id="frames">
+  <div class="step-head"><span class="step-num">2</span><h2><code>frame_signal</code>: cutting into frames</h2></div>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> frame_signal(x, n_fft, hop):</span><span class="ln" style="--i:4">x = np.asarray(x, dtype=np.float64)</span><span class="ln" style="--i:4">pad = n_fft // 2</span><span class="ln" style="--i:4">padded = np.concatenate([np.zeros(pad), x, np.zeros(pad)])</span><span class="ln" style="--i:4">n_frames = 1 + (len(padded) - n_fft) // hop</span><span class="ln" style="--i:4"><span class="kw">return</span> np.stack([padded[m * hop : m * hop + n_fft] <span class="kw">for</span> m <span class="kw">in</span> range(n_frames)])</span></div>
+  <ol class="lines">
+    <li><span class="n">3–4</span><span>Put n_fft/2 zeros before and after the signal. Then frame 0 is centred on the first real sample, so the start of the sound gets a full frame of attention instead of half.</span></li>
+    <li><span class="n">5</span><span>How many frames fit: one, plus one for every hop that still leaves room for a whole frame. <code>//</code> divides and rounds down.</span></li>
+    <li><span class="n">6</span><span>Frame m is the n_fft samples starting at m × hop. <code>np.stack</code> piles the frames into a table, one frame per row.</span></li>
+  </ol>
+  <div class="newpy">
+    <div class="label">New Python</div>
+    <dl>
+      <div><dt>[f(m) for m in range(k)]</dt><dd>A list comprehension: a list made by computing f(m) for m = 0, 1 … k−1. Read it as "f of m, for each m".</dd></div>
+      <div><dt>a[i : j]</dt><dd>A slice: elements i up to, but not including, j.</dd></div>
+      <div><dt>np.stack(list)</dt><dd>Turns a list of equal-length arrays into one 2-D table, one array per row.</dd></div>
+    </dl>
+  </div>
+  <div class="run">
+    <div class="label">Run it</div>
+    <p>Input: the numbers 1 to 20, frames of 8, hop 4. Predict how many frames there are, and what the first one looks like.</p>
+    <details><summary class="btn">Show the output</summary>
+      <div class="reveal" style="margin-top:10px">
+        <div class="out">&gt;&gt;&gt; f = frame_signal(range(1, 21), 8, 4)
+&gt;&gt;&gt; f.shape
+(6, 8)
+&gt;&gt;&gt; f[:3]
+[[0, 0, 0, 0, 1, 2, 3, 4],
+ [1, 2, 3, 4, 5, 6, 7, 8],
+ [5, 6, 7, 8, 9, 10, 11, 12]]</div>
+        <p>Six frames. The first is four zeros of padding, then 1 to 4, so sample 1 sits in the middle. Each frame starts 4 later than the one before, so neighbours share half their samples: the half-frame overlap from lesson 3.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="step" id="stft">
+  <div class="step-head"><span class="step-num">3</span><h2><code>stft</code>: a spectrum per frame</h2></div>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> stft(x, n_fft, hop, window=<span class="kw">None</span>):</span><span class="ln" style="--i:4">window = hann(n_fft) <span class="kw">if</span> window <span class="kw">is</span> <span class="kw">None</span> <span class="kw">else</span> np.asarray(window, dtype=np.float64)</span><span class="ln" style="--i:4">frames = frame_signal(x, n_fft, hop) * window</span><span class="ln" style="--i:4">spectra = [fft(f)[: n_fft // 2 + 1] <span class="kw">for</span> f <span class="kw">in</span> frames]</span><span class="ln" style="--i:4"><span class="kw">return</span> np.array(spectra).T</span></div>
+  <ol class="lines">
+    <li><span class="n">2</span><span>Use a Hann window unless the caller passed a different one.</span></li>
+    <li><span class="n">3</span><span>Cut into frames and multiply every frame by the window in one go. NumPy matches the window (length n_fft) against each row of the table.</span></li>
+    <li><span class="n">4</span><span>Run lesson 2's <code>fft</code> on each frame and keep bins 0 to Nyquist; the rest are mirror images.</span></li>
+    <li><span class="n">5</span><span><code>.T</code> flips rows and columns, so each column is a frame and each row a bin: time across, frequency down, like the picture.</span></li>
+  </ol>
+  <div class="newpy">
+    <div class="label">New Python</div>
+    <dl>
+      <div><dt>a if condition else b</dt><dd>Picks a when the condition holds, otherwise b.</dd></div>
+      <div><dt>x is None</dt><dd>True when nothing was passed in. <code>None</code> is Python's "no value".</dd></div>
+      <div><dt>A.T</dt><dd>The transpose: row i, column j becomes row j, column i.</dd></div>
+    </dl>
+  </div>
+  <div class="run">
+    <div class="label">Run it</div>
+    <p>Input: lesson 3's voice, 41,600 samples at 16,000 per second, with frames of 512 and hop 128. Predict the shape of the result: how many bins, how many frames?</p>
+    <details><summary class="btn">Show the output</summary>
+      <div class="reveal" style="margin-top:10px">
+        <div class="out">&gt;&gt;&gt; X = stft(voice, 512, 128)
+&gt;&gt;&gt; X.shape
+(257, 326)
+time taken: 2.1 s</div>
+        <p><strong>257 bins:</strong> 512 ÷ 2 + 1, from 0 to 8,000 Hz in steps of 31.25 Hz. <strong>326 frames:</strong> the padding adds 512 samples, so 1 + (42,112 − 512) ÷ 128 = 326, one every 8 ms. Every number in the table is complex: strength and phase.</p>
+        <p>Two seconds is slow, because our FFT is the from-scratch recursive one and runs 326 times. NumPy's would take a few milliseconds. The lesson page recomputes it in your browser with a faster loop-based FFT.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="step" id="istft">
+  <div class="step-head"><span class="step-num">4</span><h2><code>istft</code>: back to sound</h2></div>
+  <p>Lesson 3's step 9: turn every column back into a frame, fade it again, and add the frames up where they overlap.</p>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> istft(X, hop, length, window=<span class="kw">None</span>):</span><span class="ln" style="--i:4">X = np.asarray(X)</span><span class="ln" style="--i:4">n_fft = 2 * (X.shape[0] - 1)</span><span class="ln" style="--i:4">window = hann(n_fft) <span class="kw">if</span> window <span class="kw">is</span> <span class="kw">None</span> <span class="kw">else</span> np.asarray(window, dtype=np.float64)</span><span class="ln" style="--i:4">n_frames = X.shape[1]</span><span class="ln" style="--i:4">total = n_fft + hop * (n_frames - 1)</span><span class="ln" style="--i:4">out, norm = np.zeros(total), np.zeros(total)</span><span class="ln" style="--i:4"><span class="kw">for</span> m <span class="kw">in</span> range(n_frames):</span><span class="ln" style="--i:8">half = X[:, m]</span><span class="ln" style="--i:8">full = np.concatenate([half, np.conj(half[-2:0:-1])])</span><span class="ln" style="--i:8">frame = ifft(full).real * window</span><span class="ln" style="--i:8">out[m * hop : m * hop + n_fft] += frame</span><span class="ln" style="--i:8">norm[m * hop : m * hop + n_fft] += window**2</span><span class="ln" style="--i:4">out /= np.where(norm &gt; 1e-10, norm, 1.0)</span><span class="ln" style="--i:4">pad = n_fft // 2</span><span class="ln" style="--i:4"><span class="kw">return</span> out[pad : pad + length].astype(np.float32)</span></div>
+  <ol class="lines">
+    <li><span class="n">3</span><span>The table only has bins 0 to N/2, so N = 2 × (rows − 1). 257 rows means N = 512.</span></li>
+    <li><span class="n">6–7</span><span>The output's length, and two running totals: the overlapped frames, and how much window landed on each sample.</span></li>
+    <li><span class="n">10</span><span>Rebuild the missing top half of the spectrum. <code>half[-2:0:-1]</code> walks backwards from the second-last bin to bin 1, skipping Nyquist and bin 0, which have no twin. <code>np.conj</code> mirrors each one, because for a real signal bin N−k is the mirror image of bin k.</span></li>
+    <li><span class="n">11</span><span>Lesson 2's inverse FFT gives back the windowed frame. <code>.real</code> drops imaginary parts that are only rounding specks. Multiply by the window again.</span></li>
+    <li><span class="n">12–13</span><span><code>+=</code> adds into place, so overlapping frames sum.</span></li>
+    <li><span class="n">14</span><span>Each sample was faded twice (once in <code>stft</code>, once here), so divide by the total of the squared windows. <code>np.where</code> avoids dividing by zero at the far ends, where no window reaches.</span></li>
+    <li><span class="n">15–16</span><span>Remove the padding and trim to the original length.</span></li>
+  </ol>
+  <div class="newpy">
+    <div class="label">New Python</div>
+    <dl>
+      <div><dt>a[-2:0:-1]</dt><dd>A slice with step −1: from index −2 (the second-last) backwards, stopping before index 0.</dd></div>
+      <div><dt>a += b</dt><dd>Shorthand for a = a + b, done in place.</dd></div>
+      <div><dt>np.where(cond, a, b)</dt><dd>Element by element: a where the condition holds, b elsewhere.</dd></div>
+    </dl>
+  </div>
+  <div class="run">
+    <div class="label">Run it</div>
+    <p>Rebuild the voice from the table above and compare with the original, sample by sample.</p>
+    <div class="out">&gt;&gt;&gt; y = istft(X, 128, len(voice))
+&gt;&gt;&gt; abs(y - voice).max()
+0.00000000000000003</div>
+    <p>Effectively zero: the full STFT loses nothing. Lesson 3's random-phase experiment used this same function after replacing every angle in X with a random one.</p>
+  </div>
+</section>
+
+<section class="step" id="db">
+  <div class="step-head"><span class="step-num">5</span><h2><code>amplitude_to_db</code> and <code>frame_times</code></h2></div>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> amplitude_to_db(a, ref=1.0, floor_db=-100.0):</span><span class="ln" style="--i:4">a = np.abs(np.asarray(a, dtype=np.float64)) / ref</span><span class="ln" style="--i:4"><span class="kw">return</span> np.maximum(20 * np.log10(np.maximum(a, 1e-300)), floor_db)</span></div>
+  <p>Line 2 takes the size of each value relative to <code>ref</code>, the level that counts as 0 dB. Line 3 is the decibel formula. Zero has no logarithm, so tiny values are first raised to 10<sup>−300</sup>, and anything quieter than <code>floor_db</code> is clamped to it.</p>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> frame_times(n_frames, hop, sample_rate):</span><span class="ln" style="--i:4"><span class="kw">return</span> np.arange(n_frames) * hop / sample_rate</span></div>
+  <p>Frame m is centred on sample m × hop, which is m × hop ÷ sample_rate seconds in.</p>
+  <div class="run">
+    <div class="label">Run it</div>
+    <p>Predict the decibels for amplitudes 1, ½, 0.1, 0.01, 0.001 and 0. The ½ is the interesting one.</p>
+    <details><summary class="btn">Show the output</summary>
+      <div class="reveal" style="margin-top:10px">
+        <div class="out">&gt;&gt;&gt; amplitude_to_db([1, 0.5, 0.1, 0.01, 0.001, 0])
+[0, -6.02, -20, -40, -60, -100]
+&gt;&gt;&gt; frame_times(5, 128, 16000)
+[0, 0.008, 0.016, 0.024, 0.032]</div>
+        <p>Halving the amplitude is about −6 dB, because 20 × log<sub>10</sub>(0.5) = −6.02. Every factor of 10 is another −20 dB. Zero hits the floor of −100. And with a hop of 128 at 16,000 per second, frames are 8 ms apart.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<footer>Source: <code>src/sfs/stft.py</code>. Tests: <code>tests/test_stft.py</code>. Lesson: <a href="https://claude.ai/artifact/Q6vLsTectqLmXyoiAUJ1yZ">Seeing Sound Over Time</a>.</footer>
+</main>

@@ -124,4 +124,6 @@ results on the code page, behind a reveal.
 ## Next
 
 Lesson 3: windows and the short-time Fourier transform. Running the FFT on
-short overlapping clips to get a spectrogram: frequency over time.
+short overlapping clips to get a spectrogram: frequency over time. Notes in
+`03-stft-and-spectrograms.md`, page at
+https://claude.ai/artifact/Q6vLsTectqLmXyoiAUJ1yZ.

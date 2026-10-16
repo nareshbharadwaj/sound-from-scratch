@@ -1,0 +1,818 @@
+<title>Seeing Sound Over Time</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column of numbered steps; each step ends in a small hands-on figure. Same tokens as lessons 1 and 2. Spectrograms use one ramp from the surface through the accent to the ink. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #151821;
+  --muted: #5a6273;
+  --line: #dde1e8;
+  --accent: #3245c4;
+  --accent-soft: #e6e9fa;
+  --alias: #c2410c;
+  --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.65 var(--body); }
+.wrap {
+  max-width: 40rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; }
+h2 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+p { margin: 0 0 14px; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.lede { font-size: 1.1rem; margin-top: 12px; }
+.meta { font: 400 0.85rem/1.5 var(--ui); color: var(--muted); margin-top: 10px; }
+.toc { margin-top: 20px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 400 0.92rem/1.6 var(--ui); }
+.toc ol { margin: 6px 0 0; padding-left: 1.4em; }
+
+.step { margin-top: 44px; scroll-margin-top: 12px; }
+.step-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.step-num { font: 500 0.85rem/1 var(--mono); color: var(--accent); flex: none; }
+.term { font-weight: 600; }
+.key { margin: 16px 0; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); font-size: 0.98rem; }
+.key strong { font-family: var(--ui); }
+.math {
+  font: 400 0.95rem/1.6 var(--mono); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 14px; margin: 14px 0; overflow-x: auto; white-space: nowrap;
+}
+.parts { display: grid; gap: 8px; margin: 12px 0 16px; padding: 0; list-style: none; }
+.parts li { display: grid; grid-template-columns: 5.4rem 1fr; gap: 10px; align-items: baseline; }
+.parts li > span { min-width: 0; }
+.parts code { font: 500 0.9rem var(--mono); color: var(--accent); background: none; padding: 0; }
+
+.fig { margin: 18px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.fig canvas { width: 100%; height: 170px; display: block; }
+.fig canvas.tall { height: 240px; }
+.fig canvas.short { height: 110px; }
+.fig canvas.strip { height: 64px; }
+.readout { font: 500 0.92rem/1.45 var(--ui); margin: 0; }
+.readout .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.control { display: grid; gap: 6px; }
+.control-head { display: flex; justify-content: space-between; gap: 8px; font: 500 0.85rem var(--ui); }
+.control-head output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { font: 500 0.88rem/1 var(--ui); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.play { background: var(--alias-soft); border-color: transparent; }
+.status { font: 400 0.82rem/1.4 var(--ui); color: var(--muted); min-height: 1.1em; margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 0.8rem/1.3 var(--ui); color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+.ramp { display: flex; align-items: center; gap: 8px; font: 400 0.78rem/1 var(--ui); color: var(--muted); }
+.ramp i { flex: 1; max-width: 160px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--surface), var(--accent), var(--ink)); border: 1px solid var(--line); }
+.sublabel { font: 600 0.8rem/1.2 var(--ui); color: var(--ink); margin: 0 0 -6px; }
+
+.quiz { display: grid; gap: 10px; margin: 16px 0; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.q p { margin: 0; }
+.q .answer { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; font-size: 0.96rem; }
+dl.gloss { display: grid; gap: 10px; margin: 14px 0 0; }
+dl.gloss dt { font: 600 0.95rem var(--ui); }
+dl.gloss dd { margin: 2px 0 0; }
+.next { margin-top: 18px; padding: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.next ul { margin: 8px 0 0; padding-left: 1.2em; }
+.next li { margin: 6px 0; }
+footer { margin-top: 48px; font: 400 0.82rem/1.5 var(--ui); color: var(--muted); display: grid; gap: 8px; }
+footer p { margin: 0; }
+code { font: 400 0.88em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+</style>
+
+<main class="wrap">
+<header>
+  <div class="label">Sound From Scratch · Phase 1 · Lesson 3</div>
+  <h1 style="margin-top:8px">Seeing Sound Over Time</h1>
+  <p class="lede">Lesson 2's spectrum says which frequencies are in a sound, but not when they happen. This lesson slices a recording into short pieces and stacks their spectra into a picture of sound over time: the spectrogram. At the end you'll read a real voice in it.</p>
+  <p class="meta">About 40 minutes. Builds on lesson 2: bins, leakage, phase, and the fade from exercise 5. Headphones help for the voice.</p>
+  <nav class="toc" aria-label="Steps">
+    <div class="label">Steps</div>
+    <ol>
+      <li><a href="#s1">A spectrum can't tell time</a></li>
+      <li><a href="#s2">Listen through a short slice</a></li>
+      <li><a href="#s3">Soften the cut: windows</a></li>
+      <li><a href="#s4">Overlap the slices</a></li>
+      <li><a href="#s5">Stack them up: the spectrogram</a></li>
+      <li><a href="#s6">A real voice, and decibels</a></li>
+      <li><a href="#s7">Reading a voice</a></li>
+      <li><a href="#s8">Short slices or long ones?</a></li>
+      <li><a href="#s9">From picture back to sound</a></li>
+      <li><a href="#s10">The formula</a></li>
+      <li><a href="#s11">Why it matters for speech and music models</a></li>
+    </ol>
+  </nav>
+</header>
+
+<!-- 1 -->
+<section class="step" id="s1">
+  <div class="step-head"><span class="step-num">1</span><h2>A spectrum can't tell time</h2></div>
+  <p>Here are two sounds, each about a second long. Sound A plays a low note and then a high one. Sound B plays the same two notes the other way round. To your ear they're obviously different. Listen to both.</p>
+  <p>Before you look at the figure: lesson 2's Fourier transform turns each sound into one spectrum. Will the two spectra be different?</p>
+  <div class="fig">
+    <div class="buttons"><button class="btn play" id="p-a">Play A (low, then high)</button><button class="btn play" id="p-b">Play B (high, then low)</button></div>
+    <p class="status" id="st-ab" aria-live="polite"></p>
+    <p class="sublabel">Spectrum of A</p>
+    <canvas id="c-specA" class="short" aria-label="Spectrum of sound A"></canvas>
+    <p class="sublabel">Spectrum of B</p>
+    <canvas id="c-specB" class="short" aria-label="Spectrum of sound B"></canvas>
+    <p class="readout" id="r-ab"></p>
+  </div>
+  <p>Identical. The spectrum adds up the whole clip at once: it says there's some 400 Hz and some 800 Hz, and nothing about which came first. For speech that's useless. A word is a sequence of sounds, and the order is the word.</p>
+  <div class="key"><strong>Key idea:</strong> one spectrum of a whole recording tells you <em>what</em> frequencies are in it, but not <em>when</em>.</div>
+</section>
+
+<!-- 2 -->
+<section class="step" id="s2">
+  <div class="step-head"><span class="step-num">2</span><h2>Listen through a short slice</h2></div>
+  <p>The fix is to stop looking at the whole clip. Cut out a short piece, 32 milliseconds here, and take the spectrum of just that piece. Each short piece is called a <span class="term">frame</span>. Drag the slider to move the frame along sound A.</p>
+  <div class="fig">
+    <canvas id="c-strip" class="strip" aria-label="Sound A with the frame marked"></canvas>
+    <div class="control">
+      <div class="control-head"><label for="i-slice">Frame position</label><output id="o-slice" for="i-slice"></output></div>
+      <input id="i-slice" type="range" min="0" max="1000" step="4" value="200">
+    </div>
+    <canvas id="c-slicespec" class="short" aria-label="Spectrum of the frame"></canvas>
+    <p class="readout" id="r-slice"></p>
+  </div>
+  <p>Early in the clip the frame only sees 400 Hz; late in the clip, only 800 Hz. Park it right on the switch at 0.51 s and it sees a bit of both. A frame is like a glance: it only knows about the moment it covers.</p>
+  <div class="key"><strong>Key idea:</strong> take the spectrum of a short frame and you learn what frequencies are present <em>at that moment</em>.</div>
+</section>
+
+<!-- 3 -->
+<section class="step" id="s3">
+  <div class="step-head"><span class="step-num">3</span><h2>Soften the cut: windows</h2></div>
+  <p>Cutting out a frame has a cost you met in exercise 5. The frame starts and stops abruptly, usually partway through a cycle, so its spectrum leaks: the strength smears out over bins far from the real note.</p>
+  <p>The cure is the same as in exercise 5: fade the frame in and out before taking its spectrum. The fade shape is called a <span class="term">window</span>. The usual one, the <span class="term">Hann window</span>, is a smooth hump: zero at both edges, one in the middle. Each sample of the frame is multiplied by the hump's height at that point.</p>
+  <div class="fig">
+    <canvas id="c-win" aria-label="The frame, with or without the fade"></canvas>
+    <div class="legend"><span style="--c: var(--accent)">Frame of the 400 Hz note</span><span style="--c: var(--muted)">Window shape</span></div>
+    <div class="buttons" id="b-win" role="group" aria-label="Window">
+      <button class="btn" data-w="rect">Plain cut</button>
+      <button class="btn" data-w="hann">Hann fade</button>
+    </div>
+    <canvas id="c-winspec" class="short" aria-label="Spectrum of the frame"></canvas>
+    <p class="readout" id="r-win"></p>
+  </div>
+  <p>With the fade, the peak gets a little wider but the smear far away almost disappears. That's a good trade: in a spectrogram of speech, a quiet sound next to a loud one stays visible, as the hidden 1,500 Hz tone did in exercise 5.</p>
+  <div class="key"><strong>Key idea:</strong> fade every frame in and out with a window. It stops the cut edges from smearing the spectrum.</div>
+</section>
+
+<!-- 4 -->
+<section class="step" id="s4">
+  <div class="step-head"><span class="step-num">4</span><h2>Overlap the slices</h2></div>
+  <p>Fading has its own cost. Near the edges of each frame the window is almost zero, so whatever happens there barely counts. If frames sit end to end, sounds that fall between them are nearly ignored.</p>
+  <p>So frames overlap. The step from the start of one frame to the start of the next is called the <span class="term">hop</span>. The figure shows a row of Hann windows and, as a thick line, their total: how much each moment of the sound counts overall.</p>
+  <div class="fig">
+    <canvas id="c-hop" aria-label="Overlapping Hann windows and their total"></canvas>
+    <div class="legend"><span style="--c: var(--accent)">Each frame's window</span><span style="--c: var(--ink)">Total weight</span></div>
+    <div class="buttons" id="b-hop" role="group" aria-label="Hop">
+      <button class="btn" data-h="1">Hop = whole frame</button>
+      <button class="btn" data-h="2">Hop = ½ frame</button>
+      <button class="btn" data-h="4">Hop = ¼ frame</button>
+    </div>
+    <p class="readout" id="r-hop"></p>
+  </div>
+  <p>With a hop of half a frame, the humps fill each other's gaps exactly and the total is flat: every moment counts the same. A quarter-frame hop is flat too, with more frames per second. Speech models usually hop a quarter of a frame.</p>
+  <div class="key"><strong>Key idea:</strong> overlap the frames so that, added up, the windows give every moment of the sound the same weight.</div>
+</section>
+
+<!-- 5 -->
+<section class="step" id="s5">
+  <div class="step-head"><span class="step-num">5</span><h2>Stack them up: the spectrogram</h2></div>
+  <p>Now put it together. Slide a windowed frame along the sound one hop at a time, take each frame's spectrum, and stand the spectra side by side like slices of bread. Time runs along the bottom, frequency up the side, and the colour of each spot shows how strong that frequency is at that moment.</p>
+  <p>The whole procedure is the <span class="term">short-time Fourier transform</span>, or STFT. The picture it makes is a <span class="term">spectrogram</span>. Here are sounds A and B again. Tap play and watch the line move across.</p>
+  <div class="fig">
+    <p class="sublabel">Sound A</p>
+    <canvas id="c-sgA" aria-label="Spectrogram of sound A"></canvas>
+    <p class="sublabel">Sound B</p>
+    <canvas id="c-sgB" aria-label="Spectrogram of sound B"></canvas>
+    <div class="ramp"><span>weak</span><i></i><span>strong</span></div>
+    <div class="buttons"><button class="btn play" id="p-sgA">Play A</button><button class="btn play" id="p-sgB">Play B</button></div>
+    <p class="status" id="st-sg" aria-live="polite"></p>
+  </div>
+  <p>Each note is a horizontal bar: one frequency, held for a while. Now A and B look as different as they sound. The bars are a little thick because each frame's bins are 31 Hz apart and the Hann fade widens the peak, as in step 3.</p>
+  <div class="key"><strong>Key idea:</strong> the STFT slides a windowed frame along the sound and takes the spectrum of each. The spectrogram shows frequency over time.</div>
+</section>
+
+<!-- 6 -->
+<section class="step" id="s6">
+  <div class="step-head"><span class="step-num">6</span><h2>A real voice, and decibels</h2></div>
+  <p>Here's 2.6 seconds of a woman reading a novel aloud, from a public collection of audiobook recordings. It's recorded at 16,000 samples per second, so the picture goes up to 8,000 Hz, the Nyquist limit from lesson 1.</p>
+  <div class="fig">
+    <canvas id="c-voice" class="tall" aria-label="Spectrogram of the voice recording"></canvas>
+    <div class="ramp"><span id="ramp-lo">weak</span><i></i><span id="ramp-hi">strong</span></div>
+    <div class="buttons" id="b-scale" role="group" aria-label="Colour scale">
+      <button class="btn" data-s="linear">Plain strength</button>
+      <button class="btn" data-s="db">Decibels</button>
+    </div>
+    <div class="buttons"><button class="btn play" id="p-voice">Play the voice</button></div>
+    <p class="status" id="st-voice" aria-live="polite"></p>
+  </div>
+  <p>With plain strength the picture is nearly empty: a few bright blobs low down and little else. Speech mixes very loud parts with very quiet ones, and on a plain scale the quiet ones vanish next to the loud ones. Tap <em>Decibels</em>.</p>
+  <p>The <span class="term">decibel</span> (dB) scale counts by factors of ten instead of by steps. Every −20 dB is 10 times weaker: 0 dB is the loudest spot, −20 dB is a tenth of it, −40 dB a hundredth, −80 dB a ten-thousandth. Your ears hear loudness in this way, so decibels show the voice the way you hear it. In symbols:</p>
+  <div class="math">dB = 20 × log<sub>10</sub>(strength ÷ loudest)</div>
+  <div class="key"><strong>Key idea:</strong> real sounds span huge ranges of strength. Spectrograms are drawn in decibels, where each step of 20 dB is a factor of 10.</div>
+</section>
+
+<!-- 7 -->
+<section class="step" id="s7">
+  <div class="step-head"><span class="step-num">7</span><h2>Reading a voice</h2></div>
+  <p>Everything in this picture comes from ideas you already have. Tap each feature to outline it, then play just that part.</p>
+  <div class="fig">
+    <canvas id="c-read" class="tall" aria-label="The voice spectrogram with one feature outlined"></canvas>
+    <div class="buttons" id="b-read" role="group" aria-label="Feature">
+      <button class="btn" data-f="stripes">Stripes</button>
+      <button class="btn" data-f="hiss">Hiss</button>
+      <button class="btn" data-f="gap">Gap</button>
+    </div>
+    <p class="readout" id="r-read"></p>
+    <div class="buttons"><button class="btn play" id="p-read">Play this part</button></div>
+    <p class="status" id="st-read" aria-live="polite"></p>
+  </div>
+  <ul class="parts">
+    <li><code>Stripes</code><span>Vowels and voiced sounds. The vocal cords buzz like lesson 2's sawtooth, so the sound is a stack of <span class="term">harmonics</span>: the lowest frequency and its multiples, here about 200 Hz apart. When her pitch rises or falls, the whole stack bends together.</span></li>
+    <li><code>Bands</code><span>Inside the stripes, some regions are brighter than others. These are <span class="term">formants</span>: frequencies the shape of the mouth and throat make louder. Moving the tongue and lips moves the formants, and that's what makes "ee" sound different from "ah" at the same pitch.</span></li>
+    <li><code>Hiss</code><span>Sounds like s, sh and f have no buzz at all, just air rushing through a narrow gap. That's noise: a smudge across many high frequencies, with no stripes.</span></li>
+    <li><code>Gaps</code><span>Short silences inside words, often where the lips or tongue close off the air for a moment before a sound like p, t or k. The release can show as a thin vertical line: a click, which contains every frequency at once, as in lesson 2's click experiment.</span></li>
+  </ul>
+  <div class="key"><strong>Key idea:</strong> a voice spectrogram is readable. Stripes are the buzz of the vocal cords, bright bands are the mouth's shape, smudges are hiss, and gaps are closures.</div>
+</section>
+
+<!-- 8 -->
+<section class="step" id="s8">
+  <div class="step-head"><span class="step-num">8</span><h2>Short slices or long ones?</h2></div>
+  <p>How long should a frame be? Lesson 2 gave the rule: bins are one over the frame's duration apart. A long frame gives fine frequency detail but blurs anything that changes quickly. A short frame catches quick changes but can't separate nearby frequencies. Predict what happens to the stripes at 4 ms and at 128 ms, then try it.</p>
+  <div class="fig">
+    <canvas id="c-tradeoff" class="tall" aria-label="The voice spectrogram with adjustable frame length"></canvas>
+    <div class="control">
+      <div class="control-head"><label for="i-frame">Frame length</label><output id="o-frame" for="i-frame"></output></div>
+      <input id="i-frame" type="range" min="0" max="5" step="1" value="3">
+    </div>
+    <p class="readout" id="r-frame"></p>
+  </div>
+  <p>At 4 ms the stripes vanish into vertical smears: the bins are 250 Hz apart, wider than the gap between harmonics. At 128 ms the stripes are razor sharp, but the starts and ends of sounds smear sideways, and the bending stripes blur. Speech systems settle on about 20–50 ms, where both are good enough. You can't have perfect detail in time and frequency at once. This is the <span class="term">time–frequency tradeoff</span>.</p>
+  <div class="key"><strong>Key idea:</strong> frame length trades time detail for frequency detail. Every spectrogram is a choice somewhere in between.</div>
+</section>
+
+<!-- 9 -->
+<section class="step" id="s9">
+  <div class="step-head"><span class="step-num">9</span><h2>From picture back to sound</h2></div>
+  <p>Can you turn a spectrogram back into sound? If you kept everything, yes. Each frame's spectrum goes back to a frame of samples with lesson 2's inverse transform. Fade each one with the window again, lay them back at their positions and add up the overlaps. This is the <span class="term">inverse STFT</span>, and it rebuilds the recording exactly.</p>
+  <p>But a spectrogram picture keeps only strengths. Each bin also had a phase (lesson 2, step 4), and the picture throws it away. What would the voice sound like if we rebuilt it from strengths alone, with every phase replaced by a random angle? Predict, then listen.</p>
+  <div class="fig">
+    <div class="buttons">
+      <button class="btn play" id="p-orig">Original</button>
+      <button class="btn play" id="p-rebuilt">Rebuilt, phase kept</button>
+      <button class="btn play" id="p-random">Rebuilt, random phase</button>
+    </div>
+    <p class="status" id="st-rebuild" aria-live="polite"></p>
+    <p class="readout" id="r-rebuild"></p>
+  </div>
+  <p>With phase kept, the rebuild matches the original to within rounding. With random phase, the words are still there but the voice turns rough and hollow, like a robot whispering through a fan. In each frame the waves no longer line up the way they did, and neighbouring frames no longer agree with each other.</p>
+  <p>This matters later. Many text-to-speech models predict only a spectrogram of strengths. Something then has to invent phases that sound right. Griffin-Lim, later in this phase, does it by trial and improvement; the neural vocoders of phase 4 learn to do it.</p>
+  <div class="key"><strong>Key idea:</strong> the full STFT can be undone exactly. A spectrogram of strengths alone can't: the phase is lost, and has to be rebuilt.</div>
+</section>
+
+<!-- 10 -->
+<section class="step" id="s10">
+  <div class="step-head"><span class="step-num">10</span><h2>The formula</h2></div>
+  <p>Everything above in one line. Frame m starts at sample m × H, where H is the hop. Multiply its N samples by the window w, then take the DFT from lesson 2:</p>
+  <div class="math">X[m, k] = Σ<sub>n</sub> x[m·H + n] × w[n] × e<sup>−i·2π·k·n / N</sup></div>
+  <ul class="parts">
+    <li><code>m</code><span>which frame: a column of the spectrogram, at time m × H ÷ sample_rate</span></li>
+    <li><code>k</code><span>which bin: a row, at frequency k × sample_rate ÷ N</span></li>
+    <li><code>x[m·H+n]</code><span>sample n of frame m</span></li>
+    <li><code>w[n]</code><span>the window's height at sample n</span></li>
+    <li><code>e<sup>…</sup></code><span>bin k's test wave, as in lesson 2</span></li>
+  </ul>
+  <p>The Hann window is one cycle of a cosine, flipped and lifted so it runs from 0 up to 1 and back:</p>
+  <div class="math">w[n] = 0.5 − 0.5 × cos(2π·n / N)</div>
+  <p>The spectrogram is |X[m, k]| in decibels. Three numbers describe any spectrogram: the frame length N, the hop H and the window. A common setting in text-to-speech is N = 1,024 and H = 256 at 22,050 samples per second: 46 ms frames, a new frame every 11.6 ms (86 per second) and 513 bins.</p>
+  <p>Check yourself before revealing:</p>
+  <div class="quiz">
+    <div class="q">
+      <p>At 16,000 samples per second, a hop of 200 samples gives how many frames per second?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">16,000 ÷ 200 = <strong>80 frames per second</strong>, one every 12.5 ms.</p>
+      </details>
+    </div>
+    <div class="q">
+      <p>A 25 ms frame at 16,000 samples per second has how many samples, and how far apart are its bins?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">0.025 × 16,000 = <strong>400 samples</strong>. Bins are 16,000 ÷ 400 = <strong>40 Hz</strong> apart, one over 25 ms.</p>
+      </details>
+    </div>
+    <div class="q">
+      <p>A man's voice has harmonics about 100 Hz apart. What's the shortest frame that can separate them?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">Bins must be closer than 100 Hz, so the frame must be longer than 1 ÷ 100 Hz = <strong>10 ms</strong>. In practice about twice that, because the Hann fade widens each peak to about two bins.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="step" id="s11">
+  <div class="step-head"><span class="step-num">11</span><h2>Why it matters for speech and music models</h2></div>
+  <ul class="parts">
+    <li><code>The target</code><span>Classic text-to-speech models write a spectrogram one frame at a time, then a vocoder turns it into sound. Lesson 4 bends the frequency axis to match human hearing: the mel spectrogram these models actually use.</span></li>
+    <li><code>Phase</code><span>Step 9's robotic whisper is the problem vocoders exist to solve.</span></li>
+    <li><code>Losses</code><span>Vocoders and codecs compare spectrograms of their output and the real audio at several frame lengths at once, because step 8 showed no single length sees everything.</span></li>
+    <li><code>Music</code><span>A piano note is a stack of stripes with a sharp vertical start; drums are mostly vertical lines. The same picture reads music too.</span></li>
+  </ul>
+  <div class="next">
+    <div class="label">In the repo</div>
+    <ul>
+      <li><a href="https://claude.ai/artifact/C9tFogjcM8wvoDmc67rPef">Reading stft.py</a>: the code, wrapped for a phone and explained line by line, with real outputs.</li>
+      <li><code>src/sfs/stft.py</code>: the Hann window, framing, the STFT and inverse STFT built on lesson 2's FFT, and decibels.</li>
+      <li><code>tests/test_stft.py</code>: checks of this page's claims, including that overlapping windows add up flat, that the spectrogram knows A from B, and the time–frequency tradeoff, measured.</li>
+      <li><code>notes/lessons/03-stft-and-spectrograms.md</code>: derivations and exercises.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="step" id="glossary">
+  <div class="step-head"><h2>Words from this lesson</h2></div>
+  <dl class="gloss">
+    <div><dt>Frame</dt><dd>A short piece of a recording, analysed on its own.</dd></div>
+    <div><dt>Window</dt><dd>A fade shape multiplied into each frame so its cut edges don't smear the spectrum.</dd></div>
+    <div><dt>Hann window</dt><dd>The usual window: a smooth hump, 0 at the edges and 1 in the middle.</dd></div>
+    <div><dt>Hop</dt><dd>The step from one frame's start to the next. Usually a quarter or half of the frame.</dd></div>
+    <div><dt>STFT</dt><dd>Short-time Fourier transform: the spectrum of every windowed frame, one hop apart.</dd></div>
+    <div><dt>Spectrogram</dt><dd>The STFT's strengths drawn as a picture: time across, frequency up, colour for strength.</dd></div>
+    <div><dt>Decibel (dB)</dt><dd>A scale that counts strength by factors of ten: every 20 dB is 10 times stronger.</dd></div>
+    <div><dt>Harmonics</dt><dd>A buzz's lowest frequency and its whole-number multiples. In a spectrogram, stacked stripes.</dd></div>
+    <div><dt>Formant</dt><dd>A band of frequencies the mouth and throat make louder. Formants set which vowel you hear.</dd></div>
+    <div><dt>Time–frequency tradeoff</dt><dd>Longer frames sharpen frequency and blur time; shorter frames do the reverse.</dd></div>
+    <div><dt>Inverse STFT</dt><dd>Turning every frame back into samples and adding the overlaps. Exact only if the phase is kept.</dd></div>
+  </dl>
+</section>
+
+<footer>
+  <p>Code for this lesson: <code>src/sfs/stft.py</code>. Notes and exercises: <code>notes/lessons/03-stft-and-spectrograms.md</code>. Previous: <a href="https://claude.ai/artifact/EWputRnDr8NPzdmsmFoS33">lesson 2</a>.</p>
+  <p>Voice: LibriSpeech (openslr.org/12), utterance 198-209-0000, Jane Austen's <em>Sense and Sensibility</em>, chapter 18, read by Heather Barnett. Licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Trimmed to 2.6 seconds and normalized.</p>
+</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const TAU = 2 * Math.PI;
+const fmt = hz => `${Math.round(hz).toLocaleString("en-US")} Hz`;
+
+function colors() {
+  const s = getComputedStyle(document.documentElement);
+  const v = n => s.getPropertyValue(n).trim();
+  return { ink: v("--ink"), muted: v("--muted"), line: v("--line"), accent: v("--accent"), alias: v("--alias"), bg: v("--bg"), surface: v("--surface"), mono: v("--mono") };
+}
+function prep(canvas) {
+  const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+const hex = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+
+// ---------- Signal processing: the same steps as src/sfs/stft.py ----------
+// In-place radix-2 FFT on separate real and imaginary arrays (length a power of 2).
+function fftInPlace(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -TAU / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const a = i + k, b = a + len / 2;
+        const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        [cr, ci] = [cr * wr - ci * wi, cr * wi + ci * wr];
+      }
+    }
+  }
+}
+const hann = N => Float64Array.from({ length: N }, (_, n) => 0.5 - 0.5 * Math.cos(TAU * n / N));
+const ones = N => new Float64Array(N).fill(1);
+
+// Amplitude of each bin from 0 to Nyquist for one block of samples (scaled so a sine of amplitude A reads about A).
+function blockSpectrum(samples, win) {
+  const N = samples.length, re = new Float64Array(N), im = new Float64Array(N);
+  let wsum = 0;
+  for (let i = 0; i < N; i++) { re[i] = samples[i] * win[i]; wsum += win[i]; }
+  fftInPlace(re, im);
+  return Float64Array.from({ length: N / 2 + 1 }, (_, k) => 2 * Math.hypot(re[k], im[k]) / wsum);
+}
+
+// STFT with frames centred on multiples of the hop (n_fft/2 zeros padded at each end).
+function stft(x, N, H, keepComplex = false) {
+  const pad = N / 2, win = hann(N), total = x.length + 2 * pad;
+  const nFrames = 1 + Math.floor((total - N) / H), frames = [];
+  for (let m = 0; m < nFrames; m++) {
+    const re = new Float64Array(N), im = new Float64Array(N);
+    for (let n = 0; n < N; n++) {
+      const i = m * H + n - pad;
+      re[n] = (i >= 0 && i < x.length ? x[i] : 0) * win[n];
+    }
+    fftInPlace(re, im);
+    const mag = new Float32Array(N / 2 + 1);
+    for (let k = 0; k <= N / 2; k++) mag[k] = Math.hypot(re[k], im[k]);
+    frames.push(keepComplex ? { mag, re: re.slice(0, N / 2 + 1), im: im.slice(0, N / 2 + 1) } : { mag });
+  }
+  return { frames, N, H, len: x.length };
+}
+
+// Inverse STFT by overlap-add, dividing by the summed squared windows.
+function istft(spec, phaseFn) {
+  const { frames, N, H, len } = spec, pad = N / 2, win = hann(N);
+  const total = N + H * (frames.length - 1), out = new Float64Array(total), norm = new Float64Array(total);
+  frames.forEach((f, m) => {
+    const re = new Float64Array(N), im = new Float64Array(N);
+    for (let k = 0; k <= N / 2; k++) {
+      let r = f.re[k], i = f.im[k];
+      if (phaseFn) { const a = phaseFn(k), mag = f.mag[k]; r = mag * Math.cos(a); i = mag * Math.sin(a); if (k === 0 || k === N / 2) { r = f.mag[k] * Math.sign(Math.cos(a)); i = 0; } }
+      re[k] = r; im[k] = -i;                          // conjugate, for the inverse
+      if (k > 0 && k < N / 2) { re[N - k] = r; im[N - k] = i; }
+    }
+    fftInPlace(re, im);
+    for (let n = 0; n < N; n++) { out[m * H + n] += (re[n] / N) * win[n]; norm[m * H + n] += win[n] * win[n]; }
+  });
+  const y = new Float32Array(len);
+  for (let i = 0; i < len; i++) { const j = i + pad, d = norm[j]; y[i] = d > 1e-10 ? out[j] / d : 0; }
+  return y;
+}
+
+// ---------- Drawing ----------
+function freqAxes(canvas, o) {
+  const { ctx, w, h } = prep(canvas), c = colors();
+  const padL = 10, padR = 10, top = o.top ?? 10, bottom = h - 18;
+  const X = f => padL + (f / o.fmax) * (w - padL - padR);
+  const Y = a => bottom - (a / o.ymax) * (bottom - top);
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, bottom); ctx.lineTo(w - padR, bottom); ctx.stroke();
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`; ctx.textAlign = "left";
+  let prevRight = -Infinity;
+  for (let f = 0; f <= o.fmax + 1e-9; f += o.tick) {
+    ctx.beginPath(); ctx.moveTo(X(f), bottom); ctx.lineTo(X(f), bottom + 4); ctx.stroke();
+    const last = f + o.tick > o.fmax + 1e-9, plain = f.toLocaleString("en-US");
+    let label = plain, left;
+    if (f === 0) left = 2;
+    else if (last) { label = `${plain} Hz`; if (X(f) - ctx.measureText(label).width < prevRight + 6) label = plain; left = X(f) - ctx.measureText(label).width; }
+    else left = X(f) - ctx.measureText(label).width / 2;
+    ctx.fillText(label, left, h - 2);
+    prevRight = left + ctx.measureText(label).width;
+  }
+  return { ctx, X, Y, c, w, h, bottom, top };
+}
+function bars(ax, spectrum, binHz, fmax, color) {
+  const { ctx, X, Y, bottom } = ax, w = Math.max(2, (X(binHz) - X(0)) * 0.7);
+  ctx.fillStyle = color;
+  for (let k = 0; k * binHz <= fmax; k++) {
+    const y = Math.max(Y(spectrum[k]), ax.top);
+    if (bottom - y > 0.3) ctx.fillRect(X(k * binHz) - w / 2, y, w, bottom - y);
+  }
+}
+
+// One spectrogram figure. The image is rendered once per setting and reused, so the playhead can move cheaply.
+class SpecView {
+  constructor(canvas) { this.canvas = canvas; this.playhead = null; this.highlight = null; this.image = null; }
+  set(spec, o) { this.spec = spec; this.o = o; this.image = null; this.render(); }
+  buildImage() {
+    const { frames, N, H } = this.spec, { sr, fmax, scale } = this.o, c = colors();
+    const nBins = Math.min(N / 2 + 1, Math.floor(fmax * N / sr) + 1);
+    let peak = 0;
+    for (const f of frames) for (let k = 0; k < nBins; k++) peak = Math.max(peak, f.mag[k]);
+    const lo = hex(c.surface), mid = hex(c.accent), hi = hex(c.ink);
+    const ramp = t => t < 0.5
+      ? lo.map((v, i) => v + (mid[i] - v) * (t / 0.5))
+      : mid.map((v, i) => v + (hi[i] - v) * ((t - 0.5) / 0.5));
+    const off = document.createElement("canvas");
+    off.width = frames.length; off.height = nBins;
+    const ctx = off.getContext("2d"), img = ctx.createImageData(frames.length, nBins);
+    frames.forEach((f, m) => {
+      for (let k = 0; k < nBins; k++) {
+        const a = f.mag[k] / peak;
+        // Decibels from -70 (weakest colour) to 0; the power curve keeps faint background noise pale.
+        const t = scale === "db" ? Math.max(0, Math.min(1, (20 * Math.log10(a + 1e-12) + 70) / 70)) ** 1.7 : Math.min(1, a);
+        const [r, g, b] = ramp(t), p = ((nBins - 1 - k) * frames.length + m) * 4;
+        img.data[p] = r; img.data[p + 1] = g; img.data[p + 2] = b; img.data[p + 3] = 255;
+      }
+    });
+    ctx.putImageData(img, 0, 0);
+    this.image = off; this.nBins = nBins;
+  }
+  render() {
+    if (!this.spec) return;
+    if (!this.image) this.buildImage();
+    const { ctx, w, h } = prep(this.canvas), c = colors(), { sr, fmax, kTick = 1000 } = this.o;
+    const left = 30, right = w - 4, top = 4, bottom = h - 18;
+    const dur = this.spec.len / sr;
+    const X = t => left + (t / dur) * (right - left), Y = f => bottom - (f / fmax) * (bottom - top);
+    ctx.imageSmoothingEnabled = true;
+    // Frame m is centred at m*H/sr; stretch so the image spans the clip.
+    const firstT = 0, lastT = (this.spec.frames.length - 1) * this.spec.H / sr;
+    const halfW = (X(this.spec.H / sr) - X(0)) / 2;
+    const fTop = (this.nBins - 0.5) * sr / this.spec.N;
+    ctx.save(); ctx.beginPath(); ctx.rect(left, top, right - left, bottom - top); ctx.clip();
+    ctx.drawImage(this.image, X(firstT) - halfW, Y(fTop), X(lastT) - X(firstT) + 2 * halfW, Y(0) - Y(fTop) + (bottom - Y(0)));
+    ctx.restore();
+    ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.strokeRect(left + 0.5, top + 0.5, right - left - 1, bottom - top - 1);
+    ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+    ctx.textAlign = "right";
+    for (let f = 0; f <= fmax + 1e-9; f += kTick) {
+      const label = fmax >= 2000 ? `${f / 1000}k` : `${f}`;
+      ctx.fillText(label, left - 4, Math.max(top + 8, Math.min(bottom, Y(f) + 4)));
+    }
+    ctx.textAlign = "left"; ctx.fillText("0 s", left, h - 2);
+    ctx.textAlign = "right"; ctx.fillText(`${dur.toFixed(1)} s`, right, h - 2);
+    if (this.highlight) {
+      const hl = this.highlight;
+      ctx.strokeStyle = c.alias; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+      ctx.strokeRect(X(hl.t0), Y(hl.f1), X(hl.t1) - X(hl.t0), Y(hl.f0) - Y(hl.f1));
+    }
+    if (this.playhead != null) {
+      ctx.strokeStyle = c.alias; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(X(this.playhead), top); ctx.lineTo(X(this.playhead), bottom); ctx.stroke();
+    }
+  }
+}
+
+// ---------- Audio: WAV data URI through an <audio> element (iOS plays it with the silent switch on) ----------
+function wavDataUri(samples, sr) {
+  const n = samples.length, bytes = new Uint8Array(44 + n * 2), v = new DataView(bytes.buffer);
+  const text = (o, s) => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
+  text(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); text(8, "WAVE");
+  text(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  text(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return "data:audio/wav;base64," + btoa(bin);
+}
+function faded(samples, sr, ms = 10) {
+  const s = Float32Array.from(samples), f = Math.min(Math.round(ms / 1000 * sr), s.length >> 1);
+  for (let i = 0; i < f; i++) { const g = i / f; s[i] *= g; s[s.length - 1 - i] *= g; }
+  return s;
+}
+const player = new Audio();
+let statusEl = null, follow = null, followRaf = 0;
+function stopFollow() {
+  cancelAnimationFrame(followRaf);
+  if (follow) { follow.view.playhead = null; follow.view.render(); follow = null; }
+}
+player.addEventListener("ended", () => { if (statusEl) statusEl.textContent = ""; stopFollow(); });
+function play(samples, sr, el, message, view = null, t0 = 0) {
+  if (statusEl && statusEl !== el) statusEl.textContent = "";
+  statusEl = el; stopFollow();
+  player.pause(); player.src = wavDataUri(samples, sr);
+  el.textContent = "Starting…";
+  player.play().then(() => {
+    el.textContent = message;
+    if (view) {
+      follow = { view, t0 };
+      const tick = () => { if (!follow) return; view.playhead = t0 + player.currentTime; view.render(); followRaf = requestAnimationFrame(tick); };
+      followRaf = requestAnimationFrame(tick);
+    }
+  }).catch(err => { el.textContent = `Your browser didn't play the sound (${err.name}). Check the volume and tap again.`; });
+}
+
+// ---------- Step 1: two notes, two orders ----------
+const AB_SR = 8000, HALF = 4096;
+const tone = (f, n) => Float32Array.from({ length: n }, (_, i) => 0.5 * Math.sin(TAU * f * i / AB_SR));
+const soundA = new Float32Array(2 * HALF), soundB = new Float32Array(2 * HALF);
+soundA.set(tone(400, HALF), 0); soundA.set(tone(800, HALF), HALF);
+soundB.set(tone(800, HALF), 0); soundB.set(tone(400, HALF), HALF);
+const specA = blockSpectrum(soundA, ones(2 * HALF)), specB = blockSpectrum(soundB, ones(2 * HALF));
+function drawStep1() {
+  const binHz = AB_SR / (2 * HALF);
+  for (const [id, sp] of [["c-specA", specA], ["c-specB", specB]]) {
+    const ax = freqAxes($(id), { fmax: 1200, ymax: 0.3, tick: 200 });
+    ax.ctx.strokeStyle = ax.c.accent; ax.ctx.lineWidth = 1.5; ax.ctx.beginPath();
+    for (let k = 0; k * binHz <= 1200; k++) { const x = ax.X(k * binHz), y = Math.max(ax.Y(sp[k]), ax.top); k ? ax.ctx.lineTo(x, y) : ax.ctx.moveTo(x, y); }
+    ax.ctx.stroke();
+  }
+  let diff = 0;
+  for (let k = 0; k < specA.length; k++) diff = Math.max(diff, Math.abs(specA[k] - specB[k]));
+  $("r-ab").innerHTML = `Largest difference between the two spectra, over all <span class="num">${specA.length.toLocaleString("en-US")}</span> bins: <span class="num">${diff.toFixed(6)}</span>.`;
+}
+$("p-a").addEventListener("click", () => play(faded(soundA, AB_SR), AB_SR, $("st-ab"), "Playing A: 400 Hz, then 800 Hz."));
+$("p-b").addEventListener("click", () => play(faded(soundB, AB_SR), AB_SR, $("st-ab"), "Playing B: 800 Hz, then 400 Hz."));
+
+// ---------- Step 2: a moving frame ----------
+const SLICE = 256;    // 32 ms at 8,000 samples per second
+let slicePos = Math.round(0.2 * AB_SR);
+function drawStrip(canvas, x, sr, from, len) {
+  const { ctx, w, h } = prep(canvas), c = colors(), mid = (h - 14) / 2, amp = mid - 4;
+  const X = i => (i / x.length) * w;
+  ctx.fillStyle = c.accent; ctx.globalAlpha = 0.8;
+  for (let px = 0; px < w; px++) {
+    let lo = 1, hi = -1;
+    for (let i = Math.floor(px / w * x.length); i < Math.floor((px + 1) / w * x.length); i++) { lo = Math.min(lo, x[i]); hi = Math.max(hi, x[i]); }
+    ctx.fillRect(px, mid - hi * amp, 1, Math.max(1, (hi - lo) * amp));
+  }
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = c.alias; ctx.lineWidth = 2;
+  ctx.strokeRect(X(from), 1, Math.max(3, X(from + len) - X(from)), h - 16);
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+  ctx.textAlign = "left"; ctx.fillText("0 s", 0, h - 2);
+  ctx.textAlign = "center"; ctx.fillText("400 Hz", w * 0.25, h - 2); ctx.fillText("800 Hz", w * 0.75, h - 2);
+  ctx.textAlign = "right"; ctx.fillText(`${(x.length / sr).toFixed(2)} s`, w, h - 2);
+}
+function drawStep2() {
+  drawStrip($("c-strip"), soundA, AB_SR, slicePos, SLICE);
+  const sp = blockSpectrum(soundA.subarray(slicePos, slicePos + SLICE), ones(SLICE));
+  const ax = freqAxes($("c-slicespec"), { fmax: 1200, ymax: 0.55, tick: 200 });
+  bars(ax, sp, AB_SR / SLICE, 1200, ax.c.accent);
+  const t = slicePos / AB_SR;
+  $("o-slice").textContent = `${t.toFixed(3)} s`;
+  const end = slicePos + SLICE, where = end <= HALF ? "only the 400 Hz note" : slicePos >= HALF ? "only the 800 Hz note" : "the switch, so it sees both notes";
+  $("r-slice").innerHTML = `The frame covers <span class="num">${t.toFixed(3)}</span>–<span class="num">${(end / AB_SR).toFixed(3)}</span> s: ${where}.`;
+}
+$("i-slice").max = 2 * HALF - SLICE;
+$("i-slice").value = slicePos;
+$("i-slice").addEventListener("input", e => { slicePos = +e.target.value; drawStep2(); });
+
+// ---------- Step 3: plain cut vs Hann ----------
+let winMode = "rect";
+function drawStep3() {
+  const frame = soundA.subarray(1000, 1000 + SLICE), win = winMode === "hann" ? hann(SLICE) : ones(SLICE);
+  const { ctx, w, h } = prep($("c-win")), c = colors(), mid = (h - 14) / 2, amp = mid - 8;
+  const X = i => 8 + (i / (SLICE - 1)) * (w - 16);
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(8, mid); ctx.lineTo(w - 8, mid); ctx.stroke();
+  ctx.strokeStyle = c.muted; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.2;
+  for (const sign of [1, -1]) { ctx.beginPath(); for (let i = 0; i < SLICE; i++) { const y = mid - sign * win[i] * 0.5 / 0.55 * amp; i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); } ctx.stroke(); }
+  ctx.setLineDash([]); ctx.strokeStyle = c.accent; ctx.lineWidth = 2; ctx.beginPath();
+  for (let i = 0; i < SLICE; i++) { const y = mid - frame[i] * win[i] / 0.55 * amp; i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); }
+  ctx.stroke();
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`; ctx.textAlign = "left"; ctx.fillText("0", 8, h - 2);
+  ctx.textAlign = "right"; ctx.fillText("32 ms", w - 8, h - 2);
+  for (const b of $("b-win").children) b.setAttribute("aria-pressed", String(b.dataset.w === winMode));
+  const sp = blockSpectrum(frame, win), ax = freqAxes($("c-winspec"), { fmax: 1200, ymax: 0.55, tick: 200 });
+  bars(ax, sp, AB_SR / SLICE, 1200, ax.c.accent);
+  const peak = Math.max(...sp), far = sp.filter((v, k) => Math.abs(k * AB_SR / SLICE - 400) > 150 && v > 0.01 * peak).length;
+  $("r-win").innerHTML = `Bins more than 150 Hz from the note that still show over 1% of the peak: <span class="num">${far}</span>.`;
+}
+$("b-win").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; winMode = b.dataset.w; drawStep3(); });
+
+// ---------- Step 4: hop ----------
+let hopDiv = 1;
+function drawStep4() {
+  const { ctx, w, h } = prep($("c-hop")), c = colors(), N = 100, H = N / hopDiv, span = 5 * N;
+  const left = 8, right = w - 8, bottom = h - 16, top = 8, ymax = 2.2;
+  const X = s => left + (s / span) * (right - left), Y = v => bottom - (v / ymax) * (bottom - top);
+  const total = new Float64Array(span + 1);
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+  for (const v of [1, 2]) { ctx.beginPath(); ctx.moveTo(left, Y(v)); ctx.lineTo(right, Y(v)); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+  ctx.strokeStyle = c.accent; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.75;
+  for (let s0 = -N; s0 <= span; s0 += H) {
+    ctx.beginPath();
+    for (let n = 0; n <= N; n++) {
+      const s = s0 + n, v = 0.5 - 0.5 * Math.cos(TAU * n / N);
+      if (s >= 0 && s <= span) total[s] += n < N ? v : 0;
+      const x = X(Math.max(0, Math.min(span, s)));
+      n ? ctx.lineTo(x, Y(s < 0 || s > span ? 0 : v)) : ctx.moveTo(x, Y(s < 0 || s > span ? 0 : v));
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1; ctx.strokeStyle = c.ink; ctx.lineWidth = 2.5; ctx.beginPath();
+  for (let s = 0; s <= span; s++) s ? ctx.lineTo(X(s), Y(total[s])) : ctx.moveTo(X(s), Y(total[s]));
+  ctx.stroke();
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`; ctx.textAlign = "left";
+  ctx.fillText("1", left + 2, Y(1) - 3); ctx.fillText("2", left + 2, Y(2) - 3);
+  ctx.fillText("time →", left, h - 2);
+  for (const b of $("b-hop").children) b.setAttribute("aria-pressed", String(+b.dataset.h === hopDiv));
+  $("r-hop").innerHTML = hopDiv === 1
+    ? `Frames end to end: the total dips to <span class="num">0</span> at every join, so sounds there are almost ignored.`
+    : `Total weight is flat at <span class="num">${hopDiv / 2}</span> everywhere: every moment counts the same. That's <span class="num">${hopDiv}</span> frames covering each moment.`;
+}
+$("b-hop").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; hopDiv = +b.dataset.h; drawStep4(); });
+
+// ---------- Step 5: spectrograms of A and B ----------
+const viewA = new SpecView($("c-sgA")), viewB = new SpecView($("c-sgB"));
+const sgA = stft(soundA, 256, 64), sgB = stft(soundB, 256, 64);
+function drawStep5() {
+  viewA.set(sgA, { sr: AB_SR, fmax: 1200, scale: "linear", kTick: 400 });
+  viewB.set(sgB, { sr: AB_SR, fmax: 1200, scale: "linear", kTick: 400 });
+}
+$("p-sgA").addEventListener("click", () => play(faded(soundA, AB_SR), AB_SR, $("st-sg"), "Playing A.", viewA));
+$("p-sgB").addEventListener("click", () => play(faded(soundB, AB_SR), AB_SR, $("st-sg"), "Playing B.", viewB));
+
+// ---------- The voice ----------
+const VOICE_SR = 16000;
+const voice = (() => {
+  const bin = atob("/*VOICE_B64*/"), n = bin.length >> 1, out = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); if (v >= 32768) v -= 65536; out[i] = v / 32768; }
+  return out;
+})();
+const voiceSpecs = {};
+const voiceSpec = (N, complex = false) => {
+  const key = N + (complex ? "c" : "");
+  return voiceSpecs[key] ??= stft(voice, N, N / 4, complex);
+};
+
+// Step 6
+const viewVoice = new SpecView($("c-voice"));
+let voiceScale = "linear";
+function drawStep6() {
+  viewVoice.set(voiceSpec(512), { sr: VOICE_SR, fmax: 8000, scale: voiceScale, kTick: 2000 });
+  for (const b of $("b-scale").children) b.setAttribute("aria-pressed", String(b.dataset.s === voiceScale));
+  $("ramp-lo").textContent = voiceScale === "db" ? "−70 dB" : "weak";
+  $("ramp-hi").textContent = voiceScale === "db" ? "0 dB" : "strong";
+}
+$("b-scale").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; voiceScale = b.dataset.s; drawStep6(); });
+$("p-voice").addEventListener("click", () => play(voice, VOICE_SR, $("st-voice"), "Playing the voice.", viewVoice));
+
+// Step 7: reading the voice. Regions were picked by measuring this recording.
+const FEATURES = {
+  stripes: { t0: 0.57, t1: 0.96, f0: 0, f1: 3600, play: [0.55, 0.98],
+    text: "Stacked stripes, about 200 Hz apart, bending together as her pitch falls and rises again. The brightest bands inside them are formants." },
+  hiss: { t0: 1.88, t1: 2.05, f0: 3500, f1: 8000, play: [1.84, 2.08],
+    text: "A smudge of noise from about 3,500 Hz to the top, with no stripes: air hissing through a narrow gap, like an s." },
+  gap: { t0: 1.15, t1: 1.25, f0: 0, f1: 8000, play: [1.0, 1.42],
+    text: "Near-silence for about a tenth of a second in the middle of speech. Play the part around it to hear the sound stop and restart." },
+};
+let feature = "stripes";
+const viewRead = new SpecView($("c-read"));
+function drawStep7() {
+  viewRead.highlight = FEATURES[feature];
+  viewRead.set(voiceSpec(512), { sr: VOICE_SR, fmax: 8000, scale: "db", kTick: 2000 });
+  for (const b of $("b-read").children) b.setAttribute("aria-pressed", String(b.dataset.f === feature));
+  $("r-read").textContent = FEATURES[feature].text;
+}
+$("b-read").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; feature = b.dataset.f; drawStep7(); });
+$("p-read").addEventListener("click", () => {
+  const [a, b] = FEATURES[feature].play;
+  play(faded(voice.subarray(Math.round(a * VOICE_SR), Math.round(b * VOICE_SR)), VOICE_SR), VOICE_SR, $("st-read"),
+    `Playing ${a.toFixed(2)}–${b.toFixed(2)} s.`, viewRead, a);
+});
+
+// Step 8: the tradeoff
+const FRAME_SIZES = [64, 128, 256, 512, 1024, 2048];
+let frameIdx = 3;
+const viewTrade = new SpecView($("c-tradeoff"));
+function drawStep8() {
+  const N = FRAME_SIZES[frameIdx], ms = N / VOICE_SR * 1000;
+  viewTrade.set(voiceSpec(N), { sr: VOICE_SR, fmax: 8000, scale: "db", kTick: 2000 });
+  $("o-frame").textContent = `${ms} ms`;
+  $("r-frame").innerHTML = `<span class="num">${N}</span> samples. Bins every <span class="num">${fmt(VOICE_SR / N)}</span>; a new frame every <span class="num">${+(ms / 4).toFixed(1)}</span> ms.`;
+}
+$("i-frame").addEventListener("input", e => { frameIdx = +e.target.value; drawStep8(); });
+
+// Step 9: rebuilding
+let rebuilt = null, randomised = null;
+function makeRebuilds() {
+  if (rebuilt) return;
+  const spec = voiceSpec(512, true);
+  rebuilt = istft(spec);
+  let seed = 12345;
+  const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  randomised = istft(spec, () => TAU * rand());
+  let err = 0;
+  for (let i = 0; i < voice.length; i++) err = Math.max(err, Math.abs(rebuilt[i] - voice[i]));
+  $("r-rebuild").innerHTML = `Largest difference between the original and the phase-kept rebuild: <span class="num">${err.toExponential(1)}</span>, about a millionth of full scale.`;
+}
+$("p-orig").addEventListener("click", () => play(voice, VOICE_SR, $("st-rebuild"), "Playing the original."));
+$("p-rebuilt").addEventListener("click", () => { makeRebuilds(); play(rebuilt, VOICE_SR, $("st-rebuild"), "Playing the rebuild with phase kept."); });
+$("p-random").addEventListener("click", () => { makeRebuilds(); play(randomised, VOICE_SR, $("st-rebuild"), "Playing the rebuild with random phase."); });
+
+function drawAll() { drawStep1(); drawStep2(); drawStep3(); drawStep4(); drawStep5(); drawStep6(); drawStep7(); drawStep8(); }
+let raf = 0;
+const redraw = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(drawAll); };
+window.addEventListener("resize", redraw);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+drawAll();
+makeRebuilds();
+</script>

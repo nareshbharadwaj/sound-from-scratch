@@ -1,0 +1,116 @@
+/* Layout: one reading column; each function is a section with its code (wrapped to the phone's width), a line-by-line reading, and a real run behind a reveal. Same tokens as the lessons. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #151821;
+  --muted: #5a6273;
+  --line: #dde1e8;
+  --accent: #3245c4;
+  --accent-soft: #e6e9fa;
+  --alias: #c2410c;
+  --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.65 var(--body); }
+.wrap {
+  max-width: 40rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; }
+h2 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1rem; font-weight: 600; margin-top: 18px; margin-bottom: 8px; }
+p { margin: 0 0 14px; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.lede { font-size: 1.1rem; margin-top: 12px; }
+.meta { font: 400 0.85rem/1.5 var(--ui); color: var(--muted); margin-top: 10px; }
+.toc { margin-top: 20px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 400 0.92rem/1.6 var(--ui); }
+.toc ol { margin: 6px 0 0; padding-left: 1.4em; }
+.toc code { background: none; padding: 0; }
+
+.step { margin-top: 44px; scroll-margin-top: 12px; }
+.step-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.step-num { font: 500 0.85rem/1 var(--mono); color: var(--accent); flex: none; }
+.term { font-weight: 600; }
+.key { margin: 16px 0; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); font-size: 0.98rem; }
+.key strong { font-family: var(--ui); }
+
+/* Code: every line wraps to the screen, with a hanging indent so wrapped
+   continuations sit further right than the line they belong to. */
+.code {
+  margin: 14px 0; padding: 12px 12px 12px 10px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; font: 400 0.8rem/1.55 var(--mono); counter-reset: ln;
+  font-variant-ligatures: none;
+}
+.code .ln {
+  display: block; position: relative; white-space: pre-wrap; overflow-wrap: anywhere;
+  padding-left: calc(2.6em + var(--i, 0) * 1ch + 2ch); text-indent: -2ch;
+}
+.code .ln::before {
+  counter-increment: ln; content: counter(ln); position: absolute; left: 0; width: 1.8em; text-align: right;
+  text-indent: 0; color: var(--muted); opacity: 0.6;
+}
+.code .ln.blank { min-height: 0.8em; }
+.code .kw { color: var(--accent); font-weight: 500; }
+.code .cm { color: var(--muted); font-style: italic; }
+.code .fn { color: var(--alias); }
+
+.lines { display: grid; gap: 10px; margin: 12px 0 16px; padding: 0; list-style: none; }
+.lines li { display: grid; grid-template-columns: 3rem 1fr; gap: 8px; align-items: baseline; }
+.lines .n { font: 500 0.8rem var(--mono); color: var(--accent); text-align: right; }
+.lines li > span:last-child { min-width: 0; }
+
+.newpy { margin: 12px 0; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 10px; font-size: 0.95rem; }
+.newpy dl { margin: 6px 0 0; display: grid; gap: 8px; }
+.newpy dt { font: 500 0.88rem var(--mono); color: var(--accent); }
+.newpy dd { margin: 0; }
+
+code { font: 400 0.86em var(--mono); font-variant-ligatures: none; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+.run { margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+.run p { margin: 0; }
+.run .label { color: var(--alias); }
+.out { font: 400 0.82rem/1.6 var(--mono); background: var(--bg); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reveal { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 10px; }
+summary.btn { display: inline-block; list-style: none; }
+summary.btn::-webkit-details-marker { display: none; }
+.btn {
+  font: 500 0.88rem/1 var(--ui); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer;
+}
+.btn.play { background: var(--alias-soft); border-color: transparent; }
+details[open] > summary.btn { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.status { font: 400 0.82rem/1.4 var(--ui); color: var(--muted); min-height: 1.1em; margin: 0; }
+
+.fig { margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.fig canvas { width: 100%; height: 260px; display: block; }
+.caption { font: 400 0.85rem/1.45 var(--ui); color: var(--muted); margin: 0; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font: 400 0.86rem/1.4 var(--ui); font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+
+footer { margin-top: 48px; font: 400 0.82rem/1.5 var(--ui); color: var(--muted); }

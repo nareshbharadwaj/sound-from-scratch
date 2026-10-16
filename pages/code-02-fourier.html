@@ -66,6 +66,7 @@ p { margin: 0 0 14px; }
 .code {
   margin: 14px 0; padding: 12px 12px 12px 10px; background: var(--surface); border: 1px solid var(--line);
   border-radius: 10px; font: 400 0.8rem/1.55 var(--mono); counter-reset: ln;
+  font-variant-ligatures: none;
 }
 .code .ln {
   display: block; position: relative; white-space: pre-wrap; overflow-wrap: anywhere;
@@ -81,7 +82,7 @@ p { margin: 0 0 14px; }
 .code .fn { color: var(--alias); }
 
 .lines { display: grid; gap: 10px; margin: 12px 0 16px; padding: 0; list-style: none; }
-.lines li { display: grid; grid-template-columns: 2.2rem 1fr; gap: 8px; align-items: baseline; }
+.lines li { display: grid; grid-template-columns: 3rem 1fr; gap: 8px; align-items: baseline; }
 .lines .n { font: 500 0.8rem var(--mono); color: var(--accent); text-align: right; }
 .lines li > span:last-child { min-width: 0; }
 
@@ -90,7 +91,7 @@ p { margin: 0 0 14px; }
 .newpy dt { font: 500 0.88rem var(--mono); color: var(--accent); }
 .newpy dd { margin: 0; }
 
-code { font: 400 0.86em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+code { font: 400 0.86em var(--mono); font-variant-ligatures: none; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
 
 .run { margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
 .run p { margin: 0; }
@@ -280,9 +281,9 @@ tallest bins:
         <div class="table-wrap"><table>
           <thead><tr><th>N</th><th>dft</th><th>our fft</th><th>np.fft</th></tr></thead>
           <tbody>
-            <tr><td>256</td><td>2.9 ms</td><td>3.9 ms</td><td>8 µs</td></tr>
-            <tr><td>1,024</td><td>51 ms</td><td>15 ms</td><td>15 µs</td></tr>
-            <tr><td>4,096</td><td>1,215 ms</td><td>61 ms</td><td>49 µs</td></tr>
+            <tr><td>256</td><td>3.2 ms</td><td>3.5 ms</td><td>8 µs</td></tr>
+            <tr><td>1,024</td><td>49 ms</td><td>14 ms</td><td>13 µs</td></tr>
+            <tr><td>4,096</td><td>1,077 ms</td><td>47 ms</td><td>42 µs</td></tr>
           </tbody>
         </table></div>
         <p><strong><code>dft</code></strong> gets roughly 16× slower per step, as N × N predicts: 4× more bins, each matching 4× more samples. Timings on a shared cloud machine wobble from run to run, so read the trend, not the exact numbers.</p>
