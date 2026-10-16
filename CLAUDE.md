@@ -23,6 +23,11 @@ a session.
   with a compact companion in `notes/lessons/`. Interactive tools (like the
   Aliasing Lab) come after the lesson that explains them, never instead of
   it. `pages/README.md` lists the published URLs.
+- The same pages also form a GitHub Pages site with navigation, built by
+  `site/build.py` and deployed by `.github/workflows/pages.yml` on every
+  push to `main`. When adding a lesson, add it to `LESSONS` in
+  `site/build.py` and its artifact URL to `pages/README.md` (the builder
+  uses that table to point links at the site's own copies).
 - On iPhone, play audio through an `<audio>` element with a WAV data URI,
   not the Web Audio API, which is muted when the ringer switch is on silent.
 - The owner can't run code on the phone, and wide code overflows the

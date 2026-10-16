@@ -7,3 +7,4 @@ outputs/
 wandb/
 *.wav
 !pages/src/assets/*.wav
+_site/

@@ -23,6 +23,12 @@ Newest entry first.
   came from librosa's example data; checksum matches librosa's registry.
   No transcript, so the lesson points at features, not words.
 
+- Added a GitHub Pages site: every lesson, code walkthrough, lab and set of
+  notes, with a lessons menu, per-lesson tabs and previous/next links
+  (`site/build.py`). It deploys from `main` once Pages is switched on. The
+  repo is private, so that needs GitHub Pro or a public repo, and the site
+  itself is public either way.
+
 Next: work through the page, then the exercises (exercise 1 records the
 owner's own voice). Lesson 4: the mel scale and mel spectrograms.
 

@@ -1,0 +1,63 @@
+/* Notes, the learning log and the home page: one reading column in the lessons' tokens. */
+:root {
+  --bg: #f5f6f8; --surface: #ffffff; --ink: #151821; --muted: #5a6273; --line: #dde1e8;
+  --accent: #3245c4; --accent-soft: #e6e9fa; --alias: #c2410c; --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 17px/1.65 var(--body); }
+.prose {
+  max-width: 40rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 32px;
+}
+.prose a { color: var(--accent); }
+.prose h1, .prose h2, .prose h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; }
+.prose h1 { font-size: 2rem; letter-spacing: -0.02em; margin: 0 0 16px; }
+.prose h2 { font-size: 1.3rem; margin: 36px 0 10px; }
+.prose h3 { font-size: 1.05rem; margin: 24px 0 8px; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin: 4px 0; }
+.prose code { font: 400 0.86em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; font-variant-ligatures: none; }
+.prose pre {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 14px 0;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.prose pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
+.prose strong { font-weight: 600; }
+.table-wrap, .prose table { overflow-x: auto; }
+.prose table { display: block; border-collapse: collapse; font: 400 0.9rem/1.45 var(--ui); margin: 12px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.prose th, .prose td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.prose th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+.prose tr:last-child td { border-bottom: 0; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.home h1 { font-size: 2.3rem; margin-top: 8px; }
+.lede { font-size: 1.12rem; }
+.aside { font: 400 0.9rem/1.5 var(--ui); color: var(--muted); }
+.cards { list-style: none; padding: 0; display: grid; gap: 12px; margin: 14px 0 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 0 !important; }
+.card h3 { margin: 6px 0 6px; font-size: 1.2rem; }
+.card h3 a { color: var(--ink); text-decoration: none; }
+.card p { margin: 0 0 12px; font-size: 0.98rem; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn {
+  font: 500 0.88rem/1 var(--ui); color: var(--ink) !important; background: var(--bg); text-decoration: none;
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px;
+}
+.btn.primary { background: var(--ink); color: var(--bg) !important; border-color: var(--ink); }

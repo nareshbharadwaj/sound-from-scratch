@@ -27,6 +27,7 @@ Full plan: https://claude.ai/artifact/ExAUhat1xmLmzwM5tV3ZCE
 | `tests/` | Tests, including checks that the theory holds |
 | `modal_jobs/` | GPU jobs, run with `modal run` |
 | `pages/` | Interactive lesson pages and tools (published URLs in `pages/README.md`) |
+| `site/` | Builds the GitHub Pages site from `pages/` and `notes/` (`python site/build.py`) |
 | `notes/lessons/` | Lesson notes and exercises |
 | `notes/papers/` | One analysis per paper |
 | `notes/log.md` | Learning log |
