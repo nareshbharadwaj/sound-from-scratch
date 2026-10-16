@@ -14,6 +14,10 @@ then republish to the same URL so links in the notes keep working.
 
 The plan itself is at https://claude.ai/artifact/ExAUhat1xmLmzwM5tV3ZCE.
 
+The same pages, with navigation and the notes, are also at
+https://nareshbharadwaj.github.io/sound-from-scratch/ (rebuilt on every push
+to `main` by `site/build.py`).
+
 Pages with a template in `src/` are generated: edit the template, run its
 build script from the repo root, then republish. Code pages share
 `src/codepage.py` and `src/code-page.css`.

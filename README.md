@@ -4,6 +4,8 @@ Learning text-to-speech and music generation from first principles: reading
 papers, implementing every piece from scratch, and training real models on
 rented GPUs, all from a phone.
 
+Lessons and notes: https://nareshbharadwaj.github.io/sound-from-scratch/
+
 Full plan: https://claude.ai/artifact/ExAUhat1xmLmzwM5tV3ZCE
 
 ## Roadmap
