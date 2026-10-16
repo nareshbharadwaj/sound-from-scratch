@@ -31,7 +31,7 @@ LESSONS = [
          notes="02-fourier-transform.md",
          blurb="Splitting a sound into the sine waves it's made of, from the matching trick up to the FFT."),
     dict(n=3, title="Seeing Sound Over Time", topic="Windows, the STFT and spectrograms",
-         page="lesson-03-stft.html", code="code-03-stft.html", lab=None,
+         page="lesson-03-stft.html", code="code-03-stft.html", lab="lab-03-beats.html",
          notes="03-stft-and-spectrograms.md",
          blurb="Slicing a recording into windowed frames to draw a spectrogram, then reading a real voice in it."),
 ]
