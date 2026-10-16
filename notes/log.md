@@ -21,8 +21,16 @@ Newest entry first.
   walkthrough page (`pages/code-02-fourier.html`) built from the real
   source, with outputs behind reveals, and made that the rule in CLAUDE.md.
 
-Next: work through the page, then the exercises. Lesson 3: windows and
-the STFT.
+- Exercise 5 (1003 Hz, 0.1 s at 8 kHz), predicted then run. Predicted
+  correctly: the 1000 Hz bin beats 1010 Hz (0.86 vs 0.37) and both fall
+  short of 1. Surprises: the Hann fade made the peak taller (0.94), not
+  lower, and dropped far bins from about 0.006 to about 0.000001. A tone
+  1,000× quieter at 1500 Hz is buried by leakage without the fade and
+  stands out clearly with it. Misconception to revisit: "no signal at
+  1003 Hz", when there is no 1003 Hz bin and the tone shows up in its
+  neighbours.
+
+Next: lesson 3, windows and the STFT.
 
 ## Week 1: lesson 1 rewritten
 
