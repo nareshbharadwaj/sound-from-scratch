@@ -25,6 +25,14 @@ a session.
   it. `pages/README.md` lists the published URLs.
 - On iPhone, play audio through an `<audio>` element with a WAV data URI,
   not the Web Audio API, which is muted when the ringer switch is on silent.
+- The owner can't run code on the phone, and wide code overflows the
+  screen. Claude runs every experiment and brings back the results as
+  pictures, sounds and numbers. Code worth reading gets a walkthrough page
+  in `pages/` (like `code-02-fourier.html`): lines wrapped to the screen,
+  line-by-line explanations, new Python explained where it first appears,
+  and real outputs behind a reveal so the owner can predict first. Build
+  these from the source file with a script in `pages/src/`, so the code
+  shown always matches the repo. In chat, quote at most a few short lines.
 - Explain from first principles. Derive before you code: what is the
   quantity, why this formula, what would break without each term.
 - Ask the owner to predict a result before running the experiment, then run

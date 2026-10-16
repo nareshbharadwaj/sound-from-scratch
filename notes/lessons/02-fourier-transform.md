@@ -3,7 +3,9 @@
 Phase 1, week 2–3. Code: `src/sfs/fourier.py`. Tests: `tests/test_fourier.py`.
 
 **Start here:** [Taking Sound Apart](https://claude.ai/artifact/EWputRnDr8NPzdmsmFoS33),
-the step-by-step interactive lesson. These notes are the compact version,
+the step-by-step interactive lesson. Then
+[Reading fourier.py](https://claude.ai/artifact/HFZXH3YnELwbHHyHsFPE65),
+the code line by line with real outputs. These notes are the compact version,
 with the derivations and exercises.
 
 ## The idea
@@ -96,7 +98,8 @@ They open lesson 3.
 
 ## Exercises
 
-Predict first, then check: run the code, or ask Claude to run it.
+Predict first, then ask Claude to run it. Exercises 1 and 4 already have
+results on the code page, behind a reveal.
 
 1. Time `dft` against `fft` for N = 256, 1024, 4096. Before you run it:
    how much slower should `dft` get each time N goes up 4×? And `fft`?

@@ -1,0 +1,404 @@
+<title>Reading fourier.py</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; each function is a section with its code (wrapped to the phone's width), a line-by-line reading, and a real run behind a reveal. Same tokens as the lessons. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #151821;
+  --muted: #5a6273;
+  --line: #dde1e8;
+  --accent: #3245c4;
+  --accent-soft: #e6e9fa;
+  --alias: #c2410c;
+  --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.65 var(--body); }
+.wrap {
+  max-width: 40rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; }
+h2 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1rem; font-weight: 600; margin-top: 18px; margin-bottom: 8px; }
+p { margin: 0 0 14px; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.lede { font-size: 1.1rem; margin-top: 12px; }
+.meta { font: 400 0.85rem/1.5 var(--ui); color: var(--muted); margin-top: 10px; }
+.toc { margin-top: 20px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 400 0.92rem/1.6 var(--ui); }
+.toc ol { margin: 6px 0 0; padding-left: 1.4em; }
+.toc code { background: none; padding: 0; }
+
+.step { margin-top: 44px; scroll-margin-top: 12px; }
+.step-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.step-num { font: 500 0.85rem/1 var(--mono); color: var(--accent); flex: none; }
+.term { font-weight: 600; }
+.key { margin: 16px 0; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); font-size: 0.98rem; }
+.key strong { font-family: var(--ui); }
+
+/* Code: every line wraps to the screen, with a hanging indent so wrapped
+   continuations sit further right than the line they belong to. */
+.code {
+  margin: 14px 0; padding: 12px 12px 12px 10px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; font: 400 0.8rem/1.55 var(--mono); counter-reset: ln;
+}
+.code .ln {
+  display: block; position: relative; white-space: pre-wrap; overflow-wrap: anywhere;
+  padding-left: calc(2.6em + var(--i, 0) * 1ch + 2ch); text-indent: -2ch;
+}
+.code .ln::before {
+  counter-increment: ln; content: counter(ln); position: absolute; left: 0; width: 1.8em; text-align: right;
+  text-indent: 0; color: var(--muted); opacity: 0.6;
+}
+.code .ln.blank { min-height: 0.8em; }
+.code .kw { color: var(--accent); font-weight: 500; }
+.code .cm { color: var(--muted); font-style: italic; }
+.code .fn { color: var(--alias); }
+
+.lines { display: grid; gap: 10px; margin: 12px 0 16px; padding: 0; list-style: none; }
+.lines li { display: grid; grid-template-columns: 2.2rem 1fr; gap: 8px; align-items: baseline; }
+.lines .n { font: 500 0.8rem var(--mono); color: var(--accent); text-align: right; }
+.lines li > span:last-child { min-width: 0; }
+
+.newpy { margin: 12px 0; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 10px; font-size: 0.95rem; }
+.newpy dl { margin: 6px 0 0; display: grid; gap: 8px; }
+.newpy dt { font: 500 0.88rem var(--mono); color: var(--accent); }
+.newpy dd { margin: 0; }
+
+code { font: 400 0.86em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+.run { margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+.run p { margin: 0; }
+.run .label { color: var(--alias); }
+.out { font: 400 0.82rem/1.6 var(--mono); background: var(--bg); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reveal { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 10px; }
+summary.btn { display: inline-block; list-style: none; }
+summary.btn::-webkit-details-marker { display: none; }
+.btn {
+  font: 500 0.88rem/1 var(--ui); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer;
+}
+.btn.play { background: var(--alias-soft); border-color: transparent; }
+details[open] > summary.btn { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.status { font: 400 0.82rem/1.4 var(--ui); color: var(--muted); min-height: 1.1em; margin: 0; }
+
+.fig { margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.fig canvas { width: 100%; height: 260px; display: block; }
+.caption { font: 400 0.85rem/1.45 var(--ui); color: var(--muted); margin: 0; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font: 400 0.86rem/1.4 var(--ui); font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+
+footer { margin-top: 48px; font: 400 0.82rem/1.5 var(--ui); color: var(--muted); }
+</style>
+
+<main class="wrap">
+<header>
+  <div class="label">Sound From Scratch · Lesson 2 · Code</div>
+  <h1 style="margin-top:8px">Reading fourier.py</h1>
+  <p class="lede">The code behind lesson 2, one function at a time: what each line does, and what comes out when it runs.</p>
+  <p class="meta">You never need to run anything yourself. Claude ran every example on this page, and the outputs are real. To try a different input, ask in the chat and the result gets added here. Each function's docstring repeats its explanation, so those are left out below.</p>
+  <nav class="toc" aria-label="Functions">
+    <div class="label">On this page</div>
+    <ol>
+      <li><a href="#dft"><code>dft</code>: the transform by direct matching</a></li>
+      <li><a href="#idft"><code>idft</code>: adding the waves back up</a></li>
+      <li><a href="#fft"><code>fft</code>: the same answer by halving</a></li>
+      <li><a href="#ifft"><code>ifft</code>: the fast way back</a></li>
+      <li><a href="#bins"><code>bin_frequencies</code> and <code>amplitude_spectrum</code></a></li>
+      <li><a href="#speed">Experiment: is the FFT really faster?</a></li>
+      <li><a href="#click">Experiment: the spectrum of a click</a></li>
+    </ol>
+  </nav>
+</header>
+
+<section class="step" id="dft">
+  <div class="step-head"><span class="step-num">1</span><h2><code>dft</code>: the transform by direct matching</h2></div>
+  <p>This is lesson 2's step 9 formula, written as code. It's four lines because NumPy computes every bin's match score in one go.</p>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> dft(x):</span><span class="ln" style="--i:4">x = np.asarray(x, dtype=np.complex128)</span><span class="ln" style="--i:4">n = np.arange(len(x))</span><span class="ln" style="--i:4">tests = np.exp(-2j * np.pi * np.outer(n, n) / len(x))</span><span class="ln" style="--i:4"><span class="kw">return</span> tests @ x</span></div>
+  <ol class="lines">
+    <li><span class="n">2</span><span>Turn the input (a plain list or an array) into a NumPy array of complex numbers, so the arithmetic below has room for the "up" part.</span></li>
+    <li><span class="n">3</span><span><code>n</code> is the sample numbers 0, 1, 2 … N−1.</span></li>
+    <li><span class="n">4</span><span>Builds every test wave at once. <code>np.outer(n, n)</code> is a table whose row k, column n holds k × n. Dividing by N gives how many cycles test wave k has made by sample n; times 2π turns that into an angle; and <code>np.exp(-1j * angle)</code> is the point on the circle at that angle, e<sup>−iθ</sup>. So row k of <code>tests</code> is bin k's test wave, sampled at every n. The picture below shows it.</span></li>
+    <li><span class="n">5</span><span><code>tests @ x</code> multiplies each row by the signal, sample by sample, and adds up: the match score for every bin.</span></li>
+  </ol>
+  <div class="fig">
+    <canvas id="c-table" aria-label="The test wave table for 8 samples: one row per bin, one column per sample"></canvas>
+    <p class="caption">The <code>tests</code> table for N = 8, cosine part. Each row is one bin's test wave across the 8 samples; blue is +1, orange is −1. Row 0 is flat, row 1 makes one cycle, row 4 flips every sample (Nyquist). Rows 5–7 repeat rows 3–1: lesson 1's aliasing, which is why only bins 0 to N/2 carry new information.</p>
+  </div>
+  <div class="newpy">
+    <div class="label">New Python</div>
+    <dl>
+      <div><dt>2j</dt><dd>Python writes the imaginary unit i as <code>j</code>, so <code>2j</code> is 2i. <code>-2j * np.pi * a</code> is −2πi·a.</dd></div>
+      <div><dt>np.outer(a, b)</dt><dd>A table of every a times every b: row r, column c holds a[r] × b[c].</dd></div>
+      <div><dt>A @ x</dt><dd>Matrix times vector: for each row of A, multiply it with x element by element and add up.</dd></div>
+    </dl>
+  </div>
+  <div class="run">
+    <div class="label">Run it</div>
+    <p>Input: <code>x = [0, 1, 0, -1]</code>. That's a sine of amplitude 1 making exactly one cycle in 4 samples. Predict: which of the 4 bins come out non-zero, and how big?</p>
+    <details class="reveal-wrap"><summary class="btn">Show the output</summary>
+      <div class="reveal" style="margin-top:10px">
+        <div class="out">&gt;&gt;&gt; dft([0, 1, 0, -1])
+[0.+0.j, 0.-2.j, 0.+0.j, -0.+2.j]</div>
+        <p>Bin 1 is −2j: a strength of 2, which is N × A ÷ 2 = 4 × 1 ÷ 2. It's purely the "up" part, and negative. From step 9, the up part is minus the sine score, so this says "a sine, no cosine". Bin 3 holds the mirror image, +2j, because bin 3 is the same as bin −1. Bins 0 and 2 are exactly zero. The <code>-0.</code> is a rounding speck, a zero that came out as −0.0000000000000001.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="step" id="idft">
+  <div class="step-head"><span class="step-num">2</span><h2><code>idft</code>: adding the waves back up</h2></div>
+  <p>The same shape as <code>dft</code>, with two changes from step 9's inverse formula: the sign inside <code>exp</code> is <code>+</code>, and the result is divided by N.</p>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> idft(X):</span><span class="ln" style="--i:4">X = np.asarray(X, dtype=np.complex128)</span><span class="ln" style="--i:4">k = np.arange(len(X))</span><span class="ln" style="--i:4">waves = np.exp(2j * np.pi * np.outer(k, k) / len(X))</span><span class="ln" style="--i:4"><span class="kw">return</span> waves @ X / len(X)</span></div>
+  <ol class="lines">
+    <li><span class="n">4</span><span>Row by row these are the waves turning the opposite way, the ones that undo the forward matching.</span></li>
+    <li><span class="n">5</span><span>Adds up every bin's wave, weighted by its result X[k], and divides by N to undo the sum.</span></li>
+  </ol>
+  <div class="run">
+    <div class="label">Run it</div>
+    <p>Feed it the output from <code>dft</code> above. You should get the samples back.</p>
+    <div class="out">&gt;&gt;&gt; idft(dft([0, 1, 0, -1])).real
+[-0., 1., 0., -1.]</div>
+    <p><code>.real</code> keeps only the across parts; the up parts are all zero for a real signal.</p>
+  </div>
+</section>
+
+<section class="step" id="fft">
+  <div class="step-head"><span class="step-num">3</span><h2><code>fft</code>: the same answer by halving</h2></div>
+  <p>This is step 10 of the lesson. The function calls itself on the even samples and on the odd samples, then combines the two halves.</p>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> fft(x):</span><span class="ln" style="--i:4">x = np.asarray(x, dtype=np.complex128)</span><span class="ln" style="--i:4">N = len(x)</span><span class="ln" style="--i:4"><span class="kw">if</span> N &lt;= 1 <span class="kw">or</span> N % 2:</span><span class="ln" style="--i:8"><span class="kw">return</span> dft(x)</span><span class="ln" style="--i:4">even, odd = fft(x[0::2]), fft(x[1::2])</span><span class="ln" style="--i:4">twiddle = np.exp(-2j * np.pi * np.arange(N // 2) / N) * odd</span><span class="ln" style="--i:4"><span class="kw">return</span> np.concatenate([even + twiddle, even - twiddle])</span></div>
+  <ol class="lines">
+    <li><span class="n">4</span><span><code>N % 2</code> is the remainder after dividing by 2: 1 when N is odd. Lengths of 0 or 1, or odd lengths that can't be halved, use the direct <code>dft</code>. For a single sample that just returns it unchanged.</span></li>
+    <li><span class="n">6</span><span><code>x[0::2]</code> means "start at 0, take every second one": the evens. <code>x[1::2]</code> starts at 1: the odds. Each half goes through <code>fft</code> again, which splits it again, down to single samples.</span></li>
+    <li><span class="n">7</span><span>The <span class="term">twiddle</span>: each odd sample comes one step later than its even neighbour, which turns its result by k notches round the circle, e<sup>−2πik/N</sup>. Multiplying by <code>odd</code> applies that turn.</span></li>
+    <li><span class="n">8</span><span>The top half of the bins is even + twiddle; the bottom half reuses the same numbers with a minus. That's the butterfly from the notes.</span></li>
+  </ol>
+  <div class="newpy">
+    <div class="label">New Python</div>
+    <dl>
+      <div><dt>N % 2</dt><dd>Remainder: 0 for even N, 1 for odd.</dd></div>
+      <div><dt>x[0::2]</dt><dd>A slice: start at index 0, go to the end, step 2.</dd></div>
+      <div><dt>fft(...) inside fft</dt><dd>Recursion: a function calling itself on a smaller problem until it reaches one it can answer directly.</dd></div>
+      <div><dt>np.concatenate([a, b])</dt><dd>Joins two arrays end to end.</dd></div>
+    </dl>
+  </div>
+  <div class="run">
+    <div class="label">Walk through it</div>
+    <p>The same input, <code>[0, 1, 0, -1]</code>, by hand. Try each line before reading the next.</p>
+    <div class="out">evens = [0, 0]
+  → E = [0, 0]
+odds = [1, −1]
+  → O = [1 + (−1), 1 − (−1)]
+      = [0, 2]
+twiddles for N = 4:
+  k = 0 → 1
+  k = 1 → −j
+t = twiddle × O
+  = [1 × 0, −j × 2]
+  = [0, −2j]
+top:    E + t = [0, −2j]
+bottom: E − t = [0, +2j]
+X = [0, −2j, 0, 2j]</div>
+    <p>The same four numbers <code>dft</code> gave. The 2-sample FFT of the odds is just "sum and difference", because with only two samples the twiddle is 1 and the halves are single numbers.</p>
+  </div>
+</section>
+
+<section class="step" id="ifft">
+  <div class="step-head"><span class="step-num">4</span><h2><code>ifft</code>: the fast way back</h2></div>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> ifft(X):</span><span class="ln" style="--i:4">X = np.asarray(X, dtype=np.complex128)</span><span class="ln" style="--i:4"><span class="kw">return</span> np.conj(fft(np.conj(X))) / len(X)</span></div>
+  <p>The inverse only differs from the forward transform in the direction the waves turn. <code>np.conj</code> mirrors every point top to bottom, which turns "clockwise" into "anticlockwise". So: mirror the input, run the forward FFT, mirror the output, divide by N. That reuses all the speed of <code>fft</code> without writing a second version.</p>
+</section>
+
+<section class="step" id="bins">
+  <div class="step-head"><span class="step-num">5</span><h2><code>bin_frequencies</code> and <code>amplitude_spectrum</code></h2></div>
+  <p>These two turn raw DFT output into something you can read: a frequency in Hz for each bin, and the amplitude of the tone there.</p>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> bin_frequencies(n_samples, sample_rate):</span><span class="ln" style="--i:4"><span class="kw">return</span> np.arange(n_samples // 2 + 1) * sample_rate / n_samples</span></div>
+  <p><code>n_samples // 2 + 1</code> is the number of bins from 0 to Nyquist. <code>//</code> divides and rounds down, so 160 // 2 is 80. Each bin number times sample_rate ÷ N gives its frequency.</p>
+  <div class="code"><span class="ln" style="--i:0"><span class="kw">def</span> amplitude_spectrum(x, sample_rate):</span><span class="ln" style="--i:4">x = np.asarray(x, dtype=np.float64)</span><span class="ln" style="--i:4">N = len(x)</span><span class="ln" style="--i:4">X = fft(x)[: N // 2 + 1]</span><span class="ln" style="--i:4">amps = 2 * np.abs(X) / N</span><span class="ln" style="--i:4">amps[0] /= 2</span><span class="ln" style="--i:4"><span class="kw">if</span> N % 2 == 0:</span><span class="ln" style="--i:8">amps[-1] /= 2</span><span class="ln" style="--i:4"><span class="kw">return</span> bin_frequencies(N, sample_rate), amps</span></div>
+  <ol class="lines">
+    <li><span class="n">4</span><span>Run the FFT and keep only bins 0 to N/2. The rest are mirror images.</span></li>
+    <li><span class="n">5</span><span><code>np.abs</code> of a complex number is its distance from the centre: the strength. Times 2/N turns N × A ÷ 2 back into A.</span></li>
+    <li><span class="n">6–8</span><span>Bin 0 and the Nyquist bin have no mirror twin, so they got the full amount, not half. Halve them again. <code>amps[-1]</code> means the last element.</span></li>
+  </ol>
+  <div class="run">
+    <div class="label">Run it</div>
+    <p>Input: the mystery sound from lesson 2's step 5, 160 samples at 8,000 per second. Predict the four tallest bins before you look.</p>
+    <details><summary class="btn">Show the output</summary>
+      <div class="reveal" style="margin-top:10px">
+        <div class="out">&gt;&gt;&gt; freqs, amps = amplitude_spectrum(mystery, 8000)
+&gt;&gt;&gt; len(freqs), freqs[:4]
+(81, [0, 50, 100, 150])
+tallest bins:
+  150 Hz → 0.6
+  400 Hz → 0.35
+  650 Hz → 0.2
+  450 Hz → 0.0</div>
+        <p>The exact recipe the sound was built from. Every tone sits on a bin (150, 400 and 650 are multiples of 50 Hz), so nothing leaks, and the fourth tallest bin is zero.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="step" id="speed">
+  <div class="step-head"><span class="step-num">6</span><h2>Experiment: is the FFT really faster?</h2></div>
+  <p>This is exercise 1 from the notes. Both functions ran on random signals of 256, 1,024 and 4,096 samples, timed on the cloud machine this session runs on.</p>
+  <div class="run">
+    <div class="label">Predict</div>
+    <p>Each time N goes up 4×, how many times slower should <code>dft</code> get? And <code>fft</code>? At N = 256, how much faster do you expect <code>fft</code> to be?</p>
+    <details><summary class="btn">Show the results</summary>
+      <div class="reveal" style="margin-top:10px">
+        <div class="table-wrap"><table>
+          <thead><tr><th>N</th><th>dft</th><th>our fft</th><th>np.fft</th></tr></thead>
+          <tbody>
+            <tr><td>256</td><td>2.9 ms</td><td>3.9 ms</td><td>8 µs</td></tr>
+            <tr><td>1,024</td><td>51 ms</td><td>15 ms</td><td>15 µs</td></tr>
+            <tr><td>4,096</td><td>1,215 ms</td><td>61 ms</td><td>49 µs</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong><code>dft</code></strong> gets roughly 16× slower per step, as N × N predicts: 4× more bins, each matching 4× more samples. Timings on a shared cloud machine wobble from run to run, so read the trend, not the exact numbers.</p>
+        <p><strong>Our <code>fft</code></strong> grows much more slowly, in line with N × log<sub>2</sub>N's prediction of about 4.5× per step. By 4,096 samples it's more than 10× faster than <code>dft</code>, and the gap keeps growing with N.</p>
+        <p><strong>The surprise:</strong> at 256 samples, our FFT runs about as fast as <code>dft</code>, sometimes slower, despite doing about 30× fewer steps. Each Python function call costs about a microsecond, and <code>fft</code> calls itself about 2N times. <code>dft</code> does all its work inside one big NumPy operation, which runs as compiled code. So a better algorithm only wins once N is big enough to pay for its overhead.</p>
+        <p><strong><code>np.fft</code></strong> uses the same halving idea, written in compiled C with years of tuning: hundreds to thousands of times faster than ours. That's why the repo uses ours to understand the FFT and checks it against NumPy, and later phases will use the library version for speed. All three agree to within 0.0000000002.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="step" id="click">
+  <div class="step-head"><span class="step-num">7</span><h2>Experiment: the spectrum of a click</h2></div>
+  <p>The question from the chat, and exercise 4. A click is the shortest sound there is: one sample at 1, every other sample at 0.</p>
+  <div class="run">
+    <div class="buttons" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn play" id="p-click">Play a click</button><button class="btn play" id="p-clicks">Play 100 clicks a second</button></div>
+    <p class="status" id="st-click" aria-live="polite"></p>
+    <div class="label">Predict</div>
+    <p><code>dft([1, 0, 0, 0, 0, 0, 0, 0])</code>: which bins are non-zero, and how big? Then: what changes if the click moves to sample 5?</p>
+    <details><summary class="btn">Show the output</summary>
+      <div class="reveal" style="margin-top:10px">
+        <div class="out">&gt;&gt;&gt; dft([1, 0, 0, 0, 0, 0, 0, 0])
+[1, 1, 1, 1, 1, 1, 1, 1]
+
+&gt;&gt;&gt; dft(click at sample 5)
+[ 1, −0.71+0.71j, −1j, 0.71+0.71j,
+ −1,  0.71−0.71j, +1j, −0.71−0.71j]
+&gt;&gt;&gt; abs(...)
+[1, 1, 1, 1, 1, 1, 1, 1]</div>
+        <p><strong>Every bin is 1.</strong> A click contains every frequency, all at the same strength, all starting in step. Only one sample is non-zero, so each match score is just that sample times the test wave at n = 0, where every test wave equals 1.</p>
+        <p><strong>Moving the click</strong> leaves every strength at 1 and only changes the angles. Bin k turns by 5 × k × 45°: a delay in time is a turn in phase, bigger for higher frequencies. That's the same fact the FFT's twiddle uses.</p>
+        <p>The second button plays clicks 100 times a second. You hear a buzzy 100 Hz tone: repeating the click turns "every frequency" into "every multiple of 100 Hz". That's how your voice starts out. The vocal cords make a train of pulses, and later this phase you'll shape one into vowels.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<footer>Source: <code>src/sfs/fourier.py</code>. Tests: <code>tests/test_fourier.py</code>. Lesson: <a href="https://claude.ai/artifact/EWputRnDr8NPzdmsmFoS33">Taking Sound Apart</a>.</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function colors() {
+  const s = getComputedStyle(document.documentElement);
+  const v = n => s.getPropertyValue(n).trim();
+  return { ink: v("--ink"), muted: v("--muted"), line: v("--line"), accent: v("--accent"), alias: v("--alias"), surface: v("--surface"), mono: v("--mono") };
+}
+function prep(canvas) {
+  const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+function mix(a, b, t) {
+  const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+  const A = p(a), B = p(b);
+  return `rgb(${A.map((x, i) => Math.round(x + (B[i] - x) * t)).join(",")})`;
+}
+
+// The cosine part of the test wave table, cos(2*pi*k*n/N), for N = 8.
+function drawTable() {
+  const { ctx, w, h } = prep($("c-table")), c = colors(), N = 8;
+  const left = 50, top = 18, cell = Math.min((w - left - 4) / N, (h - top - 4) / N);
+  ctx.font = `11px ${c.mono}`; ctx.fillStyle = c.muted;
+  ctx.textAlign = "center";
+  for (let n = 0; n < N; n++) ctx.fillText(`n=${n}`, left + (n + 0.5) * cell, 12);
+  for (let k = 0; k < N; k++) {
+    ctx.textAlign = "right"; ctx.fillStyle = k > N / 2 ? c.muted : c.ink;
+    ctx.fillText(`bin ${k}`, left - 6, top + (k + 0.5) * cell + 4);
+    for (let n = 0; n < N; n++) {
+      const v = Math.cos(2 * Math.PI * k * n / N);
+      ctx.fillStyle = v >= 0 ? mix(c.surface, c.accent, v) : mix(c.surface, c.alias, -v);
+      ctx.fillRect(left + n * cell + 1, top + k * cell + 1, cell - 2, cell - 2);
+    }
+  }
+}
+
+// Audio through an <audio> element, which iOS plays with the silent switch on.
+function wavDataUri(samples, sr) {
+  const n = samples.length, bytes = new Uint8Array(44 + n * 2), v = new DataView(bytes.buffer);
+  const text = (o, s) => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
+  text(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); text(8, "WAVE");
+  text(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  text(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return "data:audio/wav;base64," + btoa(bin);
+}
+const player = new Audio();
+function play(samples, sr, message) {
+  const el = $("st-click");
+  player.pause(); player.src = wavDataUri(samples, sr);
+  el.textContent = "Starting…";
+  player.play().then(() => { el.textContent = message; })
+    .catch(err => { el.textContent = `Your browser didn't play the sound (${err.name}). Check the volume and tap again.`; });
+}
+const SR = 22050;
+$("p-click").addEventListener("click", () => {
+  const s = new Float32Array(Math.round(0.5 * SR)); s[Math.round(0.1 * SR)] = 0.9;
+  play(s, SR, "One click: a single sample at 0.9, everything else 0.");
+});
+$("p-clicks").addEventListener("click", () => {
+  const s = new Float32Array(2 * SR);
+  for (let i = 0; i < s.length; i += Math.round(SR / 100)) s[i] = 0.6;
+  play(s, SR, "Clicks 100 times a second.");
+});
+
+let raf = 0;
+const redraw = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(drawTable); };
+window.addEventListener("resize", redraw);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+drawTable();
+</script>

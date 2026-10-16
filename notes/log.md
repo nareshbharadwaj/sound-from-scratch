@@ -17,6 +17,10 @@ Newest entry first.
 - Lesson 1's exercises weren't logged as done; exercise 5 (leakage) is
   folded into lesson 2's exercises.
 
+- The owner can't run code or read wide code on the phone. Added a code
+  walkthrough page (`pages/code-02-fourier.html`) built from the real
+  source, with outputs behind reveals, and made that the rule in CLAUDE.md.
+
 Next: work through the page, then the exercises. Lesson 3: windows and
 the STFT.
 
