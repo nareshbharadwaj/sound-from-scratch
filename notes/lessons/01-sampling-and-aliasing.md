@@ -92,4 +92,6 @@ Predict first, then check: run the code, or ask Claude to run it.
 ## Next
 
 Lesson 2: the discrete Fourier transform. Taking a signal apart into the
-sine waves it's made of, and implementing the FFT yourself.
+sine waves it's made of, and implementing the FFT yourself. Notes in
+`02-fourier-transform.md`, interactive page at
+https://claude.ai/artifact/EWputRnDr8NPzdmsmFoS33.

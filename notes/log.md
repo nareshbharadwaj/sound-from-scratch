@@ -2,6 +2,24 @@
 
 Newest entry first.
 
+## Week 2: lesson 2 ready
+
+- Lesson 2, the Fourier transform, as an interactive page
+  (`pages/lesson-02-fourier.html`): adding sines, the spectrum, the
+  multiply-and-average match score, phase and the sine/cosine pair, scanning
+  every frequency, bins and resolution, leakage, rebuilding a sawtooth, the
+  DFT formula, and the FFT's even/odd split. Notes and derivations in
+  `notes/lessons/02-fourier-transform.md`.
+- Code: `src/sfs/fourier.py` with a direct `dft`, a recursive radix-2 `fft`,
+  both inverses, `bin_frequencies` and `amplitude_spectrum`. Tests check
+  them against NumPy and check what the theory predicts: one bin for an
+  on-bin tone, leakage off-bin, phase moves the angle only, Parseval.
+- Lesson 1's exercises weren't logged as done; exercise 5 (leakage) is
+  folded into lesson 2's exercises.
+
+Next: work through the page, then the exercises. Lesson 3: windows and
+the STFT.
+
 ## Week 1: lesson 1 rewritten
 
 - The first version of lesson 1 started with formulas and was hard to

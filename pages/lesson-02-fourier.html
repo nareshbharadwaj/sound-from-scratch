@@ -1,0 +1,817 @@
+<title>Taking Sound Apart</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column of numbered steps; each step ends in a small hands-on figure. Same tokens as lesson 1 and the Aliasing Lab. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #151821;
+  --muted: #5a6273;
+  --line: #dde1e8;
+  --accent: #3245c4;
+  --accent-soft: #e6e9fa;
+  --alias: #c2410c;
+  --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.65 var(--body); }
+.wrap {
+  max-width: 40rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; }
+h2 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+p { margin: 0 0 14px; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.lede { font-size: 1.1rem; margin-top: 12px; }
+.meta { font: 400 0.85rem/1.5 var(--ui); color: var(--muted); margin-top: 10px; }
+
+.toc { margin-top: 20px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 400 0.92rem/1.6 var(--ui); }
+.toc ol { margin: 6px 0 0; padding-left: 1.4em; }
+
+.step { margin-top: 44px; scroll-margin-top: 12px; }
+.step-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.step-num { font: 500 0.85rem/1 var(--mono); color: var(--accent); flex: none; }
+
+.term { font-weight: 600; }
+.key {
+  margin: 16px 0; padding: 12px 14px; border-radius: 10px;
+  background: var(--accent-soft); font-size: 0.98rem;
+}
+.key strong { font-family: var(--ui); }
+.math {
+  font: 400 0.95rem/1.6 var(--mono); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 14px; margin: 14px 0; overflow-x: auto; white-space: nowrap;
+}
+.parts { display: grid; gap: 8px; margin: 12px 0 16px; padding: 0; list-style: none; }
+.parts li { display: grid; grid-template-columns: 5.4rem 1fr; gap: 10px; align-items: baseline; }
+.parts code { font: 500 0.9rem var(--mono); color: var(--accent); background: none; padding: 0; }
+
+.fig {
+  margin: 18px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; display: grid; gap: 12px; min-width: 0;
+}
+.fig canvas { width: 100%; height: 170px; display: block; }
+.fig canvas.tall { height: 210px; }
+.fig canvas.short { height: 110px; }
+.fig canvas.ruler { height: 64px; }
+.readout { font: 500 0.92rem/1.45 var(--ui); margin: 0; }
+.readout .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.control { display: grid; gap: 6px; }
+.control-head { display: flex; justify-content: space-between; gap: 8px; font: 500 0.85rem var(--ui); }
+.control-head output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn {
+  font: 500 0.88rem/1 var(--ui); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer;
+}
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.play { background: var(--alias-soft); border-color: transparent; }
+.status { font: 400 0.82rem/1.4 var(--ui); color: var(--muted); min-height: 1.1em; margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 0.8rem/1.3 var(--ui); color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+.legend .area::before { height: 10px; opacity: 0.45; }
+
+.quiz { display: grid; gap: 10px; margin: 16px 0; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.q p { margin: 0; }
+.q .answer { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; font-size: 0.96rem; }
+
+dl.gloss { display: grid; gap: 10px; margin: 14px 0 0; }
+dl.gloss dt { font: 600 0.95rem var(--ui); }
+dl.gloss dd { margin: 2px 0 0; color: var(--ink); }
+
+.next { margin-top: 18px; padding: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.next ul { margin: 8px 0 0; padding-left: 1.2em; }
+.next li { margin: 6px 0; }
+footer { margin-top: 48px; font: 400 0.82rem/1.5 var(--ui); color: var(--muted); }
+code { font: 400 0.88em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+</style>
+
+<main class="wrap">
+<header>
+  <div class="label">Sound From Scratch · Phase 1 · Lesson 2</div>
+  <h1 style="margin-top:8px">Taking Sound Apart</h1>
+  <p class="lede">Lesson 1 turned sound into a list of numbers. This lesson turns that list into a recipe: which pure tones it's made of, and how loud each one is. The tool that does it is the Fourier transform.</p>
+  <p class="meta">About 40 minutes. Builds on lesson 1: sine waves, sample rate and Nyquist. Each new idea comes with a picture or a sound.</p>
+  <nav class="toc" aria-label="Steps">
+    <div class="label">Steps</div>
+    <ol>
+      <li><a href="#s1">Sounds are sine waves added up</a></li>
+      <li><a href="#s2">Going backwards: the spectrum</a></li>
+      <li><a href="#s3">The matching trick</a></li>
+      <li><a href="#s4">The timing problem: phase</a></li>
+      <li><a href="#s5">Test every frequency</a></li>
+      <li><a href="#s6">Which frequencies to test: bins</a></li>
+      <li><a href="#s7">Tones between bins: leakage</a></li>
+      <li><a href="#s8">Putting it back together</a></li>
+      <li><a href="#s9">The formula</a></li>
+      <li><a href="#s10">Making it fast: the FFT</a></li>
+      <li><a href="#s11">Why it matters for speech and music models</a></li>
+    </ol>
+  </nav>
+</header>
+
+<!-- 1 -->
+<section class="step" id="s1">
+  <div class="step-head"><span class="step-num">1</span><h2>Sounds are sine waves added up</h2></div>
+  <p>A single sine wave sounds pure and plain, like a tuning fork. Real sounds are richer because several sine waves are happening at once. When two waves meet in the air, their pushes simply add: if one pushes up by 0.3 and the other pulls down by 0.1, the air moves up by 0.2.</p>
+  <p>For samples this is just as simple. To mix two sounds, add their lists number by number: sample 1 plus sample 1, sample 2 plus sample 2, and so on. Below are the three notes of an A major chord. Turn them on and off and watch the thick line, their sum.</p>
+  <div class="fig">
+    <canvas id="c-chord" aria-label="Three sine waves and their sum over 20 milliseconds"></canvas>
+    <div class="legend"><span style="--c: var(--muted)">Each note on its own</span><span style="--c: var(--accent)">The mix you hear</span></div>
+    <div class="buttons" id="b-chord" role="group" aria-label="Notes in the chord">
+      <button class="btn" data-i="0" aria-pressed="true">A · 220 Hz</button>
+      <button class="btn" data-i="1" aria-pressed="true">C♯ · 277 Hz</button>
+      <button class="btn" data-i="2" aria-pressed="true">E · 330 Hz</button>
+    </div>
+    <p class="readout" id="r-chord"></p>
+    <div class="buttons"><button class="btn play" id="p-chord">Play the mix</button></div>
+    <p class="status" id="st-chord" aria-live="polite"></p>
+  </div>
+  <p>With all three on, the mix looks like a mess. Your ear still hears three clean notes, because your inner ear separates sound by frequency. The rest of this lesson builds a machine that does the same with numbers.</p>
+  <div class="key"><strong>Key idea:</strong> mixing sounds means adding their samples. A complicated waveform can be a few simple sine waves added together.</div>
+</section>
+
+<!-- 2 -->
+<section class="step" id="s2">
+  <div class="step-head"><span class="step-num">2</span><h2>Going backwards: the spectrum</h2></div>
+  <p>Adding sines is easy. The hard direction is the reverse: someone hands you the messy list of samples, and you have to say which sines are inside and how loud each one is. It's like tasting a smoothie and naming the fruit and how much of each went in.</p>
+  <p>The answer is drawn as a <span class="term">spectrum</span>: frequency along the bottom, and up the side how strong each frequency is. Here is the spectrum of the chord from step 1. It follows the notes you switched on above.</p>
+  <div class="fig">
+    <canvas id="c-spec" class="short" aria-label="Spectrum of the chord: one bar per note"></canvas>
+    <p class="readout" id="r-spec"></p>
+  </div>
+  <p>The waveform and the spectrum describe the same sound in two ways. The waveform says how the air moves over time. The spectrum says how much of each frequency there is. The <span class="term">Fourier transform</span> is the method for getting from the first to the second. The next steps build it from one simple trick.</p>
+  <div class="key"><strong>Key idea:</strong> a spectrum lists the frequencies in a sound and their strengths. The Fourier transform computes it from the samples.</div>
+</section>
+
+<!-- 3 -->
+<section class="step" id="s3">
+  <div class="step-head"><span class="step-num">3</span><h2>The matching trick</h2></div>
+  <p>How do you find out if a signal contains, say, 300 Hz? Make a <span class="term">test wave</span> at 300 Hz and compare. Multiply the signal by the test wave, sample by sample, then average the products. That average is the <span class="term">match score</span>.</p>
+  <p>Why does this work? Where both waves are up, the product is positive (up times up). Where both are down, it's positive too (minus times minus). So if the signal moves in step with the test wave, the products are all positive and the average is big. If it moves at a different speed, the waves drift in and out of step, positive and negative products balance, and the average comes out to zero.</p>
+  <p>The signal below is a single 300 Hz tone. Before you move the slider: which test frequency do you expect to give a big score?</p>
+  <div class="fig">
+    <canvas id="c-match" aria-label="The signal and the test wave"></canvas>
+    <div class="legend"><span style="--c: var(--accent)">Signal (300 Hz)</span><span style="--c: var(--alias)">Test wave</span></div>
+    <canvas id="c-prod" class="short" aria-label="The product of the two waves, sample by sample"></canvas>
+    <div class="legend"><span class="area" style="--c: var(--accent)">Positive products</span><span class="area" style="--c: var(--alias)">Negative products</span></div>
+    <div class="control">
+      <div class="control-head"><label for="i-match">Test frequency</label><output id="o-match" for="i-match"></output></div>
+      <input id="i-match" type="range" min="50" max="600" step="50" value="200">
+    </div>
+    <p class="readout" id="r-match"></p>
+  </div>
+  <p>At exactly 300 Hz the score is 0.5, not 1. That's because sin × sin swings between 0 and 1, so it averages to one half. Doubling the score gives back the tone's amplitude, so from now on scores are doubled: a score of 1 means "this frequency is present at full strength".</p>
+  <div class="key"><strong>Key idea:</strong> multiply by a test wave and average. Matching frequencies add up; every other frequency cancels out.</div>
+</section>
+
+<!-- 4 -->
+<section class="step" id="s4">
+  <div class="step-head"><span class="step-num">4</span><h2>The timing problem: phase</h2></div>
+  <p>The trick has a flaw. A wave doesn't have to start at zero going up. It can start at a peak, or anywhere else in its cycle. Where a wave is in its cycle at time zero is its <span class="term">phase</span>, measured as an angle round the circle from lesson 1: 0° to 360°.</p>
+  <p>Shift the signal by 90° and it starts at its peak. Now it's up exactly when the test sine is crossing the middle, and the score drops to zero, even though the frequency matches perfectly. Try it.</p>
+  <div class="fig">
+    <canvas id="c-phase" aria-label="A 300 hertz signal with adjustable phase, and the two test waves"></canvas>
+    <div class="legend"><span style="--c: var(--accent)">Signal (300 Hz)</span><span style="--c: var(--alias)">Test sine</span><span style="--c: var(--muted)">Test cosine</span></div>
+    <div class="control">
+      <div class="control-head"><label for="i-phase">Phase of the signal</label><output id="o-phase" for="i-phase"></output></div>
+      <input id="i-phase" type="range" min="0" max="360" step="15" value="60">
+    </div>
+    <canvas id="c-circle" class="tall" aria-label="The two match scores plotted as a point on a circle"></canvas>
+    <p class="readout" id="r-phase"></p>
+  </div>
+  <p>The fix is to test with two waves at the same frequency: the sine, and a <span class="term">cosine</span>, which is the same wave started a quarter turn (90°) earlier, at its peak. When one score drops, the other rises.</p>
+  <p>Plot the two scores as a point: sine score across, cosine score up. As you change the phase, the point travels round a circle. Its distance from the centre stays the same, and that distance is the strength of the frequency. Its angle is the phase. It's the circle from lesson 1 again: a sine wave really is a point going round a circle, and two match scores find exactly where that point is.</p>
+  <div class="key"><strong>Key idea:</strong> match against a sine and a cosine. The two scores together give the strength (distance from the centre) and the phase (the angle), whatever the timing.</div>
+</section>
+
+<!-- 5 -->
+<section class="step" id="s5">
+  <div class="step-head"><span class="step-num">5</span><h2>Test every frequency</h2></div>
+  <p>Now we can take apart a sound we don't know. Here is a mystery sound, 20 milliseconds of it. Listen, then guess how many tones it contains.</p>
+  <div class="fig">
+    <canvas id="c-mystery" class="short" aria-label="The mystery waveform"></canvas>
+    <div class="buttons"><button class="btn play" id="p-mystery">Play the mystery sound</button></div>
+    <p class="status" id="st-mystery" aria-live="polite"></p>
+  </div>
+  <p>To find out, run the matching trick (sine and cosine) at every test frequency from 0 to 1,000 Hz, and plot the strength each one finds. Tap <em>Scan</em> to watch the curve build up, or drag the slider to test one frequency at a time.</p>
+  <div class="fig">
+    <canvas id="c-scan" aria-label="Match strength for every test frequency from 0 to 1000 hertz"></canvas>
+    <div class="control">
+      <div class="control-head"><label for="i-scan">Test frequency</label><output id="o-scan" for="i-scan"></output></div>
+      <input id="i-scan" type="range" min="0" max="1000" step="10" value="1000">
+    </div>
+    <div class="buttons"><button class="btn" id="b-scan">Scan</button></div>
+    <p class="readout" id="r-scan"></p>
+  </div>
+  <p>Three peaks: tones at 150, 400 and 650 Hz, with amplitudes 0.6, 0.35 and 0.2. That's the recipe, read straight off the curve. This curve is the spectrum from step 2, computed rather than drawn by hand.</p>
+  <p>Look between the peaks, though. The curve doesn't sit flat at zero. It ripples, and only touches zero at certain frequencies: 50, 100, 200, 250 Hz, every multiple of 50. The next step explains why.</p>
+  <div class="key"><strong>Key idea:</strong> scan the matching trick across frequencies and you get the spectrum. Peaks show which tones are in the sound and how loud they are.</div>
+</section>
+
+<!-- 6 -->
+<section class="step" id="s6">
+  <div class="step-head"><span class="step-num">6</span><h2>Which frequencies to test: bins</h2></div>
+  <p>Our 20 ms clip at 8,000 samples per second is 160 samples long. A 50 Hz wave fits exactly one full cycle into 20 ms. A 100 Hz wave fits exactly two, 150 Hz exactly three, and so on. Those are the frequencies where the curve hit zero.</p>
+  <p>Test waves that fit a whole number of cycles have a special property: they cancel each other perfectly. Any two different ones multiply and average to exactly zero, which is what you saw in step 3. So a tone sitting on one of them shows up there and nowhere else. These whole-cycle frequencies are called <span class="term">bins</span>, and they're the only frequencies the Fourier transform tests.</p>
+  <div class="fig">
+    <canvas id="c-binwaves" class="tall" aria-label="The first four test waves, fitting 0, 1, 2 and 3 cycles into the clip"></canvas>
+    <canvas id="c-ruler" class="ruler" aria-label="Positions of the bins between 0 and 1000 hertz"></canvas>
+    <div class="control">
+      <div class="control-head"><label for="i-bins">Length of the clip</label><output id="o-bins" for="i-bins"></output></div>
+      <input id="i-bins" type="range" min="0" max="4" step="1" value="2">
+    </div>
+    <p class="readout" id="r-bins"></p>
+  </div>
+  <p>Change the length and notice that the test waves don't change shape: bin 1 is always one cycle across the clip. What changes is how many hertz that is. The gap between bins is one over the clip's length: 20 ms gives 50 Hz steps, a full second gives 1 Hz steps. Listen longer and you can tell closer frequencies apart. This is called the <span class="term">frequency resolution</span>.</p>
+  <p>How many bins? From 0 up to Nyquist, which is half the number of samples, plus one. Each bin has two scores (sine and cosine), and the two end bins only need one. That makes exactly N numbers out for N samples in. Nothing is gained or lost: it's the same information, rearranged.</p>
+  <div class="key"><strong>Key idea:</strong> with N samples, the bins are the frequencies that fit 0, 1, 2 … N/2 whole cycles. They sit sample_rate ÷ N apart, which is one over the clip's duration.</div>
+</section>
+
+<!-- 7 -->
+<section class="step" id="s7">
+  <div class="step-head"><span class="step-num">7</span><h2>Tones between bins: leakage</h2></div>
+  <p>Real sounds don't politely sit on bins. What happens to a tone that doesn't fit a whole number of cycles? Below, the clip is 20 ms again, so bins are 50 Hz apart. The tone starts at 325 Hz, halfway between the 300 and 350 Hz bins. Predict first: what will its spectrum look like?</p>
+  <div class="fig">
+    <canvas id="c-leakwave" class="short" aria-label="The tone across the 20 millisecond clip"></canvas>
+    <canvas id="c-leak" aria-label="Bin strengths for the tone"></canvas>
+    <div class="control">
+      <div class="control-head"><label for="i-leak">Tone frequency</label><output id="o-leak" for="i-leak"></output></div>
+      <input id="i-leak" type="range" min="200" max="400" step="5" value="325">
+    </div>
+    <p class="readout" id="r-leak"></p>
+  </div>
+  <p>The tone's strength spills out over many bins. The peak is shorter than the true amplitude, and bins far away pick up a bit too. This is <span class="term">spectral leakage</span>. It happens because the tone ends partway through a cycle, so its cancellation against every test wave is no longer perfect. Slide to 300 or 350 Hz and the leakage vanishes.</p>
+  <p>Leakage is why lesson 1's <code>dominant_frequency</code> multiplies the samples by a smooth hump called a window before matching. Windows are the start of lesson 3.</p>
+  <div class="key"><strong>Key idea:</strong> a tone between bins leaks into its neighbours. The spectrum shows it blurred, centred on the right frequency.</div>
+</section>
+
+<!-- 8 -->
+<section class="step" id="s8">
+  <div class="step-head"><span class="step-num">8</span><h2>Putting it back together</h2></div>
+  <p>Each bin gives a frequency, a strength and a phase. That's everything you need to draw a sine wave. So the trip can be reversed: draw every bin's sine wave and add them up, as in step 1. That gives back the original samples exactly. Going back is the <span class="term">inverse Fourier transform</span>.</p>
+  <p>Here's a buzzy sound, a sawtooth wave at 110 Hz, shown dashed. Its spectrum has a bar at 110 Hz, 220, 330 and every multiple, each weaker than the last. Rebuild it one sine at a time. Before you slide: will it sound brighter or duller as you add waves?</p>
+  <div class="fig">
+    <canvas id="c-build" aria-label="The sawtooth and the sum of the first few sine waves"></canvas>
+    <div class="legend"><span style="--c: var(--muted)">Target sawtooth</span><span style="--c: var(--accent)">Sum of the sines so far</span></div>
+    <canvas id="c-buildspec" class="short" aria-label="Which sine waves are included"></canvas>
+    <div class="control">
+      <div class="control-head"><label for="i-build">Sine waves added</label><output id="o-build" for="i-build"></output></div>
+      <input id="i-build" type="range" min="1" max="40" step="1" value="3">
+    </div>
+    <div class="buttons"><button class="btn play" id="p-build">Play the rebuilt sound</button><button class="btn play" id="p-saw">Play the full sawtooth</button></div>
+    <p class="status" id="st-build" aria-live="polite"></p>
+  </div>
+  <p>With one wave you hear a pure 110 Hz hum. Each extra wave adds a higher frequency, and the sound gets brighter and buzzier. Pitch stays the same, because the first wave sets the repeat rate. The higher waves set the <span class="term">timbre</span>, the colour of the sound. That's why a violin and a flute playing the same note sound different: same first wave, different recipe above it.</p>
+  <div class="key"><strong>Key idea:</strong> the spectrum loses nothing. Adding all the bins' sine waves back up rebuilds the samples exactly.</div>
+</section>
+
+<!-- 9 -->
+<section class="step" id="s9">
+  <div class="step-head"><span class="step-num">9</span><h2>The formula</h2></div>
+  <p>Everything so far, written down. Number the samples n = 0, 1, … N−1 and the bins k = 0, 1, … The test waves for bin k make k cycles across the N samples, so at sample n they are at angle 2π·k·n/N round the circle. The two match scores for bin k are sums of signal × test wave:</p>
+  <div class="math">cos score[k] = Σ x[n] × cos(2π·k·n / N)<br>sin score[k] = Σ x[n] × sin(2π·k·n / N)</div>
+  <ul class="parts">
+    <li><code>x[n]</code><span>sample number n</span></li>
+    <li><code>k·n / N</code><span>how many cycles the test wave has made by sample n</span></li>
+    <li><code>2π ×</code><span>turns cycles into an angle, as in lesson 1</span></li>
+    <li><code>Σ</code><span>"add up over every n". A sum rather than an average: we don't divide by N</span></li>
+  </ul>
+  <p>Papers pack the two scores into one <span class="term">complex number</span>. Don't let the name worry you: a complex number is just a pair of numbers, an across part and an up part, so it's a point on a flat plane, like the point on the circle in step 4. The letter <code>i</code> marks the up part. In that notation, the point on the circle at angle θ is written e<sup>iθ</sup>, which is shorthand for cos θ + i sin θ. So the whole transform becomes:</p>
+  <div class="math">X[k] = Σ x[n] × e<sup>−i·2π·k·n / N</sup></div>
+  <ul class="parts">
+    <li><code>X[k]</code><span>bin k's result: a point whose across part is the cos score and whose up part is minus the sin score</span></li>
+    <li><code>|X[k]|</code><span>its distance from the centre: the strength. For a sine of amplitude A sitting on bin k, it's N × A ÷ 2</span></li>
+    <li><code>angle</code><span>its angle: the phase</span></li>
+    <li><code>−</code><span>the minus sign is a convention, so test waves turn the opposite way round the circle. Flipping it flips every phase, nothing else</span></li>
+  </ul>
+  <p>This is the <span class="term">discrete Fourier transform</span>, or DFT. "Discrete" because it works on samples rather than a smooth curve. The inverse adds the waves back, with the sign flipped and a 1/N to undo the sum:</p>
+  <div class="math">x[n] = (1/N) × Σ X[k] × e<sup>+i·2π·k·n / N</sup></div>
+  <p>Check yourself before revealing:</p>
+  <div class="quiz">
+    <div class="q">
+      <p>You record 1 second of speech at 16,000 samples per second. How far apart are the bins, and how many are there from 0 to Nyquist?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">Gap = 16,000 ÷ 16,000 = <strong>1 Hz</strong>. Bins run from 0 to 8,000 Hz, so there are <strong>8,001</strong> of them.</p>
+      </details>
+    </div>
+    <div class="q">
+      <p>A sine of amplitude 0.5 fits whole cycles into 1,000 samples. What is |X[k]| at its bin?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">N × A ÷ 2 = 1,000 × 0.5 ÷ 2 = <strong>250</strong>. Libraries return this raw sum, so code that wants amplitudes multiplies by 2/N, as <code>amplitude_spectrum</code> does.</p>
+      </details>
+    </div>
+    <div class="q">
+      <p>With a 20 ms clip, can the DFT tell a 410 Hz tone from a 420 Hz tone?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">Barely. The bins are 50 Hz apart, so both tones fall between the 400 and 450 Hz bins and leak in similar ways. To give them separate bins you'd need 10 Hz spacing, which means a clip of at least 100 ms.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="step" id="s10">
+  <div class="step-head"><span class="step-num">10</span><h2>Making it fast: the FFT</h2></div>
+  <p>Done directly, the DFT multiplies every sample by every bin's test wave: N × N steps. For one second of speech, that's 16,000 × 16,000, about 256 million. Speech models compute thousands of these per training example, so the direct way is far too slow.</p>
+  <p>The <span class="term">fast Fourier transform</span> (FFT) gets the same numbers with a trick of splitting in half. Take the even-numbered samples on their own. A test wave making k cycles across all N samples, looked at only at the even samples, is a wave making k cycles across N/2 samples. So the evens need only a DFT half the size. The odd-numbered samples are the same, except each one comes one sample later, which just turns their result by a fixed angle round the circle. Two half-size DFTs, plus a quick step to combine them, give the full answer.</p>
+  <p>Then split each half again, and again, until the pieces are single samples:</p>
+  <div class="fig">
+    <canvas id="c-tree" class="tall" aria-label="Eight samples split into evens and odds three times"></canvas>
+    <div class="control">
+      <div class="control-head"><label for="i-fft">Number of samples N</label><output id="o-fft" for="i-fft"></output></div>
+      <input id="i-fft" type="range" min="3" max="20" step="1" value="14">
+    </div>
+    <p class="readout" id="r-fft"></p>
+  </div>
+  <p>N samples can be halved log<sub>2</sub>N times (8 → 4 → 2 → 1 is 3 times, and 2<sup>3</sup> = 8). Each level of splitting costs about N steps to combine. So the FFT takes about N × log<sub>2</sub>N steps instead of N × N. The halving works best when N is a power of 2, which is why you see sizes like 512, 1,024 and 2,048 everywhere in audio code.</p>
+  <div class="key"><strong>Key idea:</strong> the FFT is not a different transform. It computes exactly the DFT, by splitting the samples into evens and odds over and over. N × N steps become N × log<sub>2</sub>N.</div>
+</section>
+
+<!-- 11 -->
+<section class="step" id="s11">
+  <div class="step-head"><span class="step-num">11</span><h2>Why it matters for speech and music models</h2></div>
+  <ul class="parts">
+    <li><code>Spectrograms</code><span>Speech changes from moment to moment, so models run the FFT on short clips one after another, giving a picture of frequency over time. That's lesson 3, and it's the input or output of most TTS models.</span></li>
+    <li><code>Resolution</code><span>Step 6's tradeoff never goes away: short clips follow fast changes but blur frequencies; long clips separate frequencies but blur timing. Every model picks a clip length, usually 20–50 ms.</span></li>
+    <li><code>Phase</code><span>Models often keep only the strengths and throw the phase away. Step 8 needs both to rebuild sound, so something has to guess the phase back. That's Griffin-Lim later in this phase, and the vocoders of phase 4.</span></li>
+    <li><code>Losses</code><span>Vocoders and codecs are trained to make the spectrum of their output match the real one, using FFTs inside the training loss.</span></li>
+  </ul>
+  <div class="next">
+    <div class="label">In the repo</div>
+    <ul>
+      <li><code>src/sfs/fourier.py</code>: the DFT by direct matching, the FFT by halving, both inverses, and <code>amplitude_spectrum</code>, all from scratch and checked against NumPy.</li>
+      <li><code>tests/test_fourier.py</code>: checks of what this page claims, including one-bin tones, leakage between bins and nothing lost on the way back.</li>
+      <li><code>notes/lessons/02-fourier-transform.md</code>: the derivations (why whole cycles cancel, why N × A ÷ 2, the FFT's halving step) and exercises.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="step" id="glossary">
+  <div class="step-head"><h2>Words from this lesson</h2></div>
+  <dl class="gloss">
+    <div><dt>Spectrum</dt><dd>Which frequencies a sound contains, and how strong each one is.</dd></div>
+    <div><dt>Fourier transform</dt><dd>The method that turns samples into a spectrum. The inverse transform turns it back.</dd></div>
+    <div><dt>Match score</dt><dd>Signal times test wave, sample by sample, added up. Large when the signal contains the test frequency.</dd></div>
+    <div><dt>Phase</dt><dd>Where a wave is in its cycle at time zero, as an angle from 0° to 360°.</dd></div>
+    <div><dt>Cosine</dt><dd>A sine wave started a quarter turn earlier, at its peak.</dd></div>
+    <div><dt>Bin</dt><dd>One of the test frequencies that fit a whole number of cycles into the clip. With N samples they sit sample_rate ÷ N apart.</dd></div>
+    <div><dt>Frequency resolution</dt><dd>The gap between bins. Longer clips give finer resolution.</dd></div>
+    <div><dt>Spectral leakage</dt><dd>A tone between bins spreading its strength over neighbouring bins.</dd></div>
+    <div><dt>Timbre</dt><dd>The colour of a sound, set by the strengths of the frequencies above the lowest one.</dd></div>
+    <div><dt>Complex number</dt><dd>A pair of numbers treated as one: a point on a plane. The DFT uses one per bin for strength and phase.</dd></div>
+    <div><dt>DFT</dt><dd>The discrete Fourier transform: the Fourier transform for a list of N samples.</dd></div>
+    <div><dt>FFT</dt><dd>The fast Fourier transform: the same result as the DFT, computed in about N × log<sub>2</sub>N steps by repeated halving.</dd></div>
+  </dl>
+</section>
+
+<footer>Code for this lesson: <code>src/sfs/fourier.py</code>. Notes and exercises: <code>notes/lessons/02-fourier-transform.md</code>. Previous: <a href="https://claude.ai/artifact/CTMTE6mSumB1BdVKi4vxHA">lesson 1</a>.</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const TAU = 2 * Math.PI;
+const fmt = hz => `${Math.round(hz).toLocaleString("en-US")} Hz`;
+const num = (v, d = 2) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function colors() {
+  const s = getComputedStyle(document.documentElement);
+  const v = n => s.getPropertyValue(n).trim();
+  return { ink: v("--ink"), muted: v("--muted"), line: v("--line"), accent: v("--accent"), alias: v("--alias"), bg: v("--bg"), surface: v("--surface"), accentSoft: v("--accent-soft"), mono: v("--mono") };
+}
+function prep(canvas) {
+  const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+// A wave plotted over time. Each curve: { fn(t), color (token name), width, alpha, dash, fill }.
+function timePlot(canvas, o) {
+  const { ctx, w, h } = prep(canvas), c = colors();
+  const pad = 8, mid = (h - 14) / 2, ampPx = mid - 8, ymax = o.ymax ?? 1;
+  const X = t => pad + (t / o.span) * (w - 2 * pad);
+  const Y = v => mid - (v / ymax) * ampPx;
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, mid); ctx.lineTo(w - pad, mid); ctx.stroke();
+  for (const cv of o.curves) {
+    const steps = cv.steps ?? 900;
+    if (cv.fill) {
+      for (const sign of [1, -1]) {
+        ctx.fillStyle = sign > 0 ? c.accent : c.alias; ctx.globalAlpha = 0.35;
+        ctx.beginPath(); ctx.moveTo(X(0), mid);
+        for (let i = 0; i <= steps; i++) {
+          const t = (i / steps) * o.span, v = cv.fn(t);
+          ctx.lineTo(X(t), Y(sign > 0 ? Math.max(0, v) : Math.min(0, v)));
+        }
+        ctx.lineTo(X(o.span), mid); ctx.closePath(); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.strokeStyle = c[cv.color]; ctx.lineWidth = cv.width ?? 2; ctx.globalAlpha = cv.alpha ?? 1;
+    ctx.setLineDash(cv.dash ?? []); ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const t = (i / steps) * o.span, y = Y(cv.fn(t));
+      i ? ctx.lineTo(X(t), y) : ctx.moveTo(X(t), y);
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+  ctx.textAlign = "left"; ctx.fillText("0", pad, h - 2);
+  ctx.textAlign = "right"; ctx.fillText(`${+(o.span * 1000).toFixed(1)} ms`, w - pad, h - 2);
+  return { ctx, X, Y, c, w, h, mid };
+}
+
+// Frequency along the bottom, strength up the side.
+function freqAxes(canvas, o) {
+  const { ctx, w, h } = prep(canvas), c = colors();
+  const padL = 10, padR = 10, top = o.top ?? 18, bottom = h - 18;
+  const X = f => padL + (f / o.fmax) * (w - padL - padR);
+  const Y = a => bottom - (a / o.ymax) * (bottom - top);
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, bottom); ctx.lineTo(w - padR, bottom); ctx.stroke();
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+  // Labels: the first sits left-aligned, the last right-aligned with the unit
+  // (dropped if it would run into its neighbour), the rest centred.
+  let prevRight = -Infinity;
+  for (let f = 0; f <= o.fmax + 1e-9; f += o.tick) {
+    ctx.beginPath(); ctx.moveTo(X(f), bottom); ctx.lineTo(X(f), bottom + 4); ctx.stroke();
+    const last = f + o.tick > o.fmax + 1e-9, plain = f.toLocaleString("en-US");
+    let label = plain, left;
+    if (f === 0) left = 2;
+    else if (last) {
+      label = `${plain} Hz`;
+      if (X(f) - ctx.measureText(label).width < prevRight + 6) label = plain;
+      left = X(f) - ctx.measureText(label).width;
+    } else left = X(f) - ctx.measureText(label).width / 2;
+    ctx.textAlign = "left"; ctx.fillText(label, left, h - 2);
+    prevRight = left + ctx.measureText(label).width;
+  }
+  return { ctx, X, Y, c, w, h, bottom, top };
+}
+function bar(ax, f, a, color, width = 6) {
+  const { ctx, X, Y, bottom } = ax;
+  ctx.fillStyle = color;
+  const y = Math.min(Y(a), bottom - 1);
+  ctx.fillRect(X(f) - width / 2, y, width, bottom - y);
+}
+
+// Audio: build a WAV file and play it with an <audio> element, which iOS
+// plays even when the ringer switch is on silent.
+function wavDataUri(samples, sr) {
+  const n = samples.length, bytes = new Uint8Array(44 + n * 2), v = new DataView(bytes.buffer);
+  const text = (o, s) => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
+  text(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); text(8, "WAVE");
+  text(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  text(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return "data:audio/wav;base64," + btoa(bin);
+}
+// Samples of fn(t) with short fades so the start and end don't click.
+function synth(fn, sr, seconds) {
+  const n = Math.round(seconds * sr), s = new Float32Array(n), fadeN = Math.round(0.02 * sr);
+  for (let i = 0; i < n; i++) s[i] = Math.min(1, i / fadeN, (n - 1 - i) / fadeN) * fn(i / sr);
+  return s;
+}
+const player = new Audio();
+let statusEl = null;
+player.addEventListener("ended", () => { if (statusEl) statusEl.textContent = ""; });
+function play(samples, sr, el, message) {
+  if (statusEl && statusEl !== el) statusEl.textContent = "";
+  statusEl = el;
+  player.pause(); player.src = wavDataUri(samples, sr);
+  el.textContent = "Starting…";
+  player.play().then(() => { el.textContent = message; })
+    .catch(err => { el.textContent = `Your browser didn't play the sound (${err.name}). Check the volume and tap again.`; });
+}
+const PLAY_SR = 22050;
+
+// Steps 1 and 2: the chord
+const NOTES = [{ name: "A", f: 220 }, { name: "C♯", f: 277.18 }, { name: "E", f: 329.63 }];
+const chordOn = [true, true, true];
+const NOTE_AMP = 0.3;
+const noteFn = f => t => NOTE_AMP * Math.sin(TAU * f * t);
+const chordFn = t => NOTES.reduce((s, n, i) => s + (chordOn[i] ? noteFn(n.f)(t) : 0), 0);
+function drawChord() {
+  const curves = NOTES.filter((_, i) => chordOn[i]).map(n => ({ fn: noteFn(n.f), color: "muted", width: 1.2, alpha: 0.75 }));
+  curves.push({ fn: chordFn, color: "accent", width: 2.5 });
+  timePlot($("c-chord"), { span: 0.02, ymax: 0.95, curves });
+  for (const b of $("b-chord").children) b.setAttribute("aria-pressed", String(chordOn[+b.dataset.i]));
+  const on = NOTES.filter((_, i) => chordOn[i]);
+  if (!on.length) { $("r-chord").textContent = "All notes are off, so every sample is 0: silence."; return; }
+  const t = 0.003, parts = on.map(n => noteFn(n.f)(t));
+  const sum = parts.reduce((a, b) => a + b, 0);
+  $("r-chord").innerHTML = on.length === 1
+    ? `One note on its own: the mix is just that sine wave.`
+    : `At 3 ms the notes are at <span class="num">${parts.map(v => num(v)).join(" + ")}</span>, so the mix is at <span class="num">${num(sum)}</span>.`;
+}
+function drawSpec() {
+  const ax = freqAxes($("c-spec"), { fmax: 500, ymax: 0.4, tick: 100 });
+  const on = NOTES.filter((_, i) => chordOn[i]);
+  ax.ctx.font = `600 12px ${getComputedStyle(document.documentElement).getPropertyValue("--ui")}`;
+  ax.ctx.textAlign = "center";
+  for (const n of on) {
+    bar(ax, n.f, NOTE_AMP, ax.c.accent, 7);
+    ax.ctx.fillStyle = ax.c.ink; ax.ctx.fillText(n.name, ax.X(n.f), ax.Y(NOTE_AMP) - 4);
+  }
+  $("r-spec").innerHTML = on.length
+    ? `${on.length} bar${on.length > 1 ? "s" : ""}: ${on.map(n => `${n.name} at <span class="num">${fmt(n.f)}</span>`).join(", ")}, each with amplitude <span class="num">0.3</span>.`
+    : "No notes on, so the spectrum is empty.";
+}
+$("b-chord").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  chordOn[+b.dataset.i] = !chordOn[+b.dataset.i];
+  drawChord(); drawSpec();
+});
+$("p-chord").addEventListener("click", () => {
+  const on = NOTES.filter((_, i) => chordOn[i]);
+  if (!on.length) { $("st-chord").textContent = "Turn on at least one note first."; return; }
+  play(synth(t => 0.8 * chordFn(t), PLAY_SR, 2), PLAY_SR, $("st-chord"), `Playing ${on.map(n => n.name).join(" + ")}.`);
+});
+
+// Step 3: multiply and average
+const M_SR = 8000, M_SPAN = 0.02, M_N = 160;
+let matchG = 200;
+function avgProduct(sig, test) {
+  let s = 0;
+  for (let n = 0; n < M_N; n++) s += sig(n / M_SR) * test(n / M_SR);
+  return s / M_N;
+}
+function drawMatch() {
+  const sig = t => Math.sin(TAU * 300 * t), test = t => Math.sin(TAU * matchG * t);
+  timePlot($("c-match"), { span: M_SPAN, ymax: 1.1, curves: [
+    { fn: test, color: "alias", width: 1.5 }, { fn: sig, color: "accent", width: 2.5 }] });
+  timePlot($("c-prod"), { span: M_SPAN, ymax: 1.1, curves: [{ fn: t => sig(t) * test(t), color: "muted", width: 1, fill: true }] });
+  $("o-match").textContent = fmt(matchG);
+  const a = avgProduct(sig, test), z = Math.abs(a) < 5e-4 ? 0 : a;
+  $("r-match").innerHTML = matchG === 300
+    ? `Average of the products: <span class="num">${num(z, 3)}</span>. The waves move in step, so every product is positive or zero.`
+    : `Average of the products: <span class="num">${num(z, 3)}</span>. The waves drift in and out of step, and the positive and negative areas cancel.`;
+}
+$("i-match").addEventListener("input", e => { matchG = +e.target.value; drawMatch(); });
+
+// Step 4: phase
+let phaseDeg = 60;
+function drawPhase() {
+  const p = phaseDeg * Math.PI / 180;
+  const sig = t => Math.sin(TAU * 300 * t + p);
+  const ts = t => Math.sin(TAU * 300 * t), tc = t => Math.cos(TAU * 300 * t);
+  timePlot($("c-phase"), { span: M_SPAN / 2, ymax: 1.1, curves: [
+    { fn: ts, color: "alias", width: 1.2, alpha: 0.85 }, { fn: tc, color: "muted", width: 1.2, dash: [4, 3] },
+    { fn: sig, color: "accent", width: 2.5 }] });
+  $("o-phase").textContent = `${phaseDeg}°`;
+  const sScore = 2 * avgProduct(sig, ts), cScore = 2 * avgProduct(sig, tc);
+  const clean = v => Math.abs(v) < 5e-4 ? 0 : v;
+
+  const { ctx, w, h } = prep($("c-circle")), c = colors();
+  const R = Math.min(h / 2 - 22, w / 2 - 60), cx = w / 2, cy = h / 2;
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - R - 14, cy); ctx.lineTo(cx + R + 14, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - R - 14); ctx.lineTo(cx, cy + R + 14); ctx.stroke();
+  ctx.strokeStyle = c.muted; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  const px = cx + sScore * R, py = cy - cScore * R;
+  // angle arc
+  ctx.strokeStyle = c.alias; ctx.lineWidth = 2;
+  if (phaseDeg % 360) { ctx.beginPath(); ctx.arc(cx, cy, R * 0.28, 0, -p, true); ctx.stroke(); }
+  ctx.strokeStyle = c.accent; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+  ctx.fillStyle = c.ink; ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU); ctx.fill();
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+  ctx.textAlign = "right"; ctx.fillText("sine score →", w - 4, cy + 16);
+  ctx.textAlign = "left"; ctx.fillText("cosine score ↑", cx + 6, 11);
+
+  $("r-phase").innerHTML = `Sine score <span class="num">${num(clean(sScore))}</span>, cosine score <span class="num">${num(clean(cScore))}</span>. Distance from the centre: <span class="num">${Math.hypot(sScore, cScore).toFixed(2)}</span>. Angle: <span class="num">${phaseDeg}°</span>.`;
+}
+$("i-phase").addEventListener("input", e => { phaseDeg = +e.target.value; drawPhase(); });
+
+// Step 5: scan every frequency
+const MYSTERY = [{ f: 150, a: 0.6, p: 1.0 }, { f: 400, a: 0.35, p: 2.2 }, { f: 650, a: 0.2, p: 0.4 }];
+const mysteryFn = t => MYSTERY.reduce((s, m) => s + m.a * Math.sin(TAU * m.f * t + m.p), 0);
+const mysterySamples = Array.from({ length: M_N }, (_, n) => mysteryFn(n / M_SR));
+function strengthAt(g, samples = mysterySamples) {
+  let C = 0, S = 0;
+  for (let n = 0; n < samples.length; n++) {
+    const ang = TAU * g * n / M_SR;
+    C += samples[n] * Math.cos(ang); S += samples[n] * Math.sin(ang);
+  }
+  return 2 * Math.hypot(C, S) / samples.length;
+}
+const scanCurve = Array.from({ length: 1001 }, (_, g) => strengthAt(g));
+let scanG = 1000, scanRaf = 0;
+function drawMystery() {
+  timePlot($("c-mystery"), { span: M_SPAN, ymax: 1.2, curves: [{ fn: mysteryFn, color: "accent", width: 2 }] });
+}
+function drawScan() {
+  const ax = freqAxes($("c-scan"), { fmax: 1000, ymax: 0.7, tick: 200, top: 10 }), { ctx, X, Y, c } = ax;
+  ctx.strokeStyle = c.accent; ctx.lineWidth = 2; ctx.beginPath();
+  const end = Math.round(scanG);
+  for (let g = 0; g <= end; g++) g ? ctx.lineTo(X(g), Y(scanCurve[g])) : ctx.moveTo(X(g), Y(scanCurve[g]));
+  ctx.stroke();
+  ctx.strokeStyle = c.alias; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(X(scanG), ax.top); ctx.lineTo(X(scanG), ax.bottom); ctx.stroke();
+  ctx.fillStyle = c.alias; ctx.beginPath(); ctx.arc(X(scanG), Y(scanCurve[end]), 4.5, 0, TAU); ctx.fill();
+  $("o-scan").textContent = fmt(scanG);
+  const v = scanCurve[end];
+  const peak = MYSTERY.find(m => m.f === end);
+  $("r-scan").innerHTML = `Testing <span class="num">${fmt(end)}</span>: strength <span class="num">${v.toFixed(2)}</span>` +
+    (peak ? `. A peak: this tone is in the sound.` : end % 50 === 0 ? `. Exactly zero here.` : `.`);
+}
+$("i-scan").addEventListener("input", e => { cancelAnimationFrame(scanRaf); scanG = +e.target.value; drawScan(); });
+$("b-scan").addEventListener("click", () => {
+  cancelAnimationFrame(scanRaf);
+  if (reduceMotion) { scanG = 1000; $("i-scan").value = 1000; drawScan(); return; }
+  const t0 = performance.now();
+  const step = now => {
+    scanG = Math.min(1000, (now - t0) / 4);           // 4 seconds for the full sweep
+    $("i-scan").value = Math.round(scanG / 10) * 10;
+    drawScan();
+    if (scanG < 1000) scanRaf = requestAnimationFrame(step);
+  };
+  scanRaf = requestAnimationFrame(step);
+});
+$("p-mystery").addEventListener("click", () => {
+  play(synth(t => 0.7 * mysteryFn(t), PLAY_SR, 2), PLAY_SR, $("st-mystery"), "Playing the mystery sound.");
+});
+
+// Step 6: bins
+const CLIP_MS = [5, 10, 20, 40, 100];
+let clipIdx = 2;
+function drawBins() {
+  const ms = CLIP_MS[clipIdx], N = M_SR * ms / 1000, spacing = M_SR / N;
+  $("o-bins").textContent = `${ms} ms`;
+  const { ctx, w, h } = prep($("c-binwaves")), c = colors();
+  const rows = 4, rowH = h / rows, left = 112, right = w - 8;
+  for (let k = 0; k < rows; k++) {
+    const mid = rowH * k + rowH / 2, amp = rowH * 0.36;
+    ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(left, mid); ctx.lineTo(right, mid); ctx.stroke();
+    ctx.strokeStyle = c.accent; ctx.lineWidth = 2; ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const u = i / 400, x = left + u * (right - left), y = mid - amp * Math.cos(TAU * k * u);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = c.ink; ctx.font = `600 12px ${c.mono}`; ctx.textAlign = "left";
+    ctx.fillText(`bin ${k}`, 4, mid - 3);
+    ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+    ctx.fillText(`${k} cycle${k === 1 ? "" : "s"}`, 4, mid + 11);
+    ctx.fillStyle = c.alias; ctx.font = `500 12px ${c.mono}`; ctx.textAlign = "right";
+    ctx.fillText(fmt(k * spacing), left - 8, mid - 3);
+  }
+  // ruler
+  const ax = freqAxes($("c-ruler"), { fmax: 1000, ymax: 1, tick: 200, top: 6 });
+  ax.ctx.strokeStyle = ax.c.accent; ax.ctx.lineWidth = 1.5;
+  for (let f = 0; f <= 1000 + 1e-9; f += spacing) {
+    ax.ctx.beginPath(); ax.ctx.moveTo(ax.X(f), ax.bottom); ax.ctx.lineTo(ax.X(f), ax.top + 10); ax.ctx.stroke();
+  }
+  $("r-bins").innerHTML = `<span class="num">${N}</span> samples. Bins every <span class="num">${fmt(spacing)}</span>, from 0 up to the 4,000 Hz Nyquist limit: <span class="num">${(N / 2 + 1).toLocaleString("en-US")}</span> bins. The ruler shows those below 1,000 Hz.`;
+}
+$("i-bins").addEventListener("input", e => { clipIdx = +e.target.value; drawBins(); });
+
+// Step 7: leakage
+let leakF = 325;
+const LEAK_AMP = 0.8;
+function drawLeak() {
+  const tone = t => LEAK_AMP * Math.sin(TAU * leakF * t);
+  const tp = timePlot($("c-leakwave"), { span: M_SPAN, ymax: 1, curves: [{ fn: tone, color: "accent", width: 2 }] });
+  // mark where the clip starts and ends
+  tp.ctx.fillStyle = tp.c.alias;
+  for (const t of [0, M_SPAN]) { tp.ctx.beginPath(); tp.ctx.arc(tp.X(t), tp.Y(tone(t)), 4.5, 0, TAU); tp.ctx.fill(); }
+
+  const samples = Array.from({ length: M_N }, (_, n) => tone(n / M_SR));
+  const ax = freqAxes($("c-leak"), { fmax: 1000, ymax: 1, tick: 200, top: 10 });
+  const amps = [];
+  for (let k = 0; k <= 20; k++) {
+    let a = strengthAt(k * 50, samples);
+    if (k === 0) a /= 2;
+    amps.push(a);
+  }
+  // the true amplitude, for reference
+  ax.ctx.strokeStyle = ax.c.muted; ax.ctx.setLineDash([4, 4]); ax.ctx.lineWidth = 1;
+  ax.ctx.beginPath(); ax.ctx.moveTo(ax.X(0), ax.Y(LEAK_AMP)); ax.ctx.lineTo(ax.X(1000), ax.Y(LEAK_AMP)); ax.ctx.stroke(); ax.ctx.setLineDash([]);
+  ax.ctx.fillStyle = ax.c.muted; ax.ctx.font = `11px ${ax.c.mono}`; ax.ctx.textAlign = "right";
+  ax.ctx.fillText("true amplitude", ax.X(1000), ax.Y(LEAK_AMP) - 4);
+  amps.forEach((a, k) => bar(ax, k * 50, a, ax.c.accent, 8));
+  ax.ctx.strokeStyle = ax.c.alias; ax.ctx.lineWidth = 1.5;
+  ax.ctx.beginPath(); ax.ctx.moveTo(ax.X(leakF), ax.bottom); ax.ctx.lineTo(ax.X(leakF), ax.bottom - 10); ax.ctx.stroke();
+
+  $("o-leak").textContent = fmt(leakF);
+  const peak = Math.max(...amps), spread = amps.filter(a => a > 0.04).length;
+  const cycles = leakF * M_SPAN;
+  $("r-leak").innerHTML = leakF % 50 === 0
+    ? `<span class="num">${+cycles.toFixed(2)}</span> whole cycles fit in the clip. One bin, full height: <span class="num">${peak.toFixed(2)}</span>.`
+    : `<span class="num">${+cycles.toFixed(2)}</span> cycles: not a whole number. The tallest bar is <span class="num">${peak.toFixed(2)}</span> instead of <span class="num">0.80</span>, and <span class="num">${spread}</span> bins pick up something.`;
+}
+$("i-leak").addEventListener("input", e => { leakF = +e.target.value; drawLeak(); });
+
+// Step 8: rebuilding a sawtooth
+const SAW_F = 110, SAW_AMP = 0.6;
+let buildK = 3;
+const harmonicAmp = k => SAW_AMP * 2 / (Math.PI * k);
+const sawPartial = (K, f0 = SAW_F) => t => {
+  let s = 0;
+  for (let k = 1; k <= K; k++) s += (k % 2 ? 1 : -1) * harmonicAmp(k) * Math.sin(TAU * k * f0 * t);
+  return s;
+};
+const sawExact = t => { const u = (t * SAW_F + 0.5) % 1; return SAW_AMP * (2 * u - 1); };
+function drawBuild() {
+  timePlot($("c-build"), { span: 2 / SAW_F, ymax: 0.85, curves: [
+    { fn: sawExact, color: "muted", width: 1.5, dash: [5, 4], steps: 1200 },
+    { fn: sawPartial(buildK), color: "accent", width: 2.5, steps: 1200 }] });
+  const ax = freqAxes($("c-buildspec"), { fmax: 4400, ymax: 0.42, tick: 1000, top: 6 });
+  for (let k = 1; k <= 40; k++) bar(ax, k * SAW_F, harmonicAmp(k), k <= buildK ? ax.c.accent : ax.c.line, 3);
+  $("o-build").textContent = `${buildK} (up to ${fmt(buildK * SAW_F)})`;
+}
+$("i-build").addEventListener("input", e => { buildK = +e.target.value; drawBuild(); });
+$("p-build").addEventListener("click", () => {
+  play(synth(sawPartial(buildK), PLAY_SR, 2), PLAY_SR, $("st-build"),
+    `Playing ${buildK} sine wave${buildK === 1 ? "" : "s"} added up.`);
+});
+$("p-saw").addEventListener("click", () => {
+  const K = Math.floor(PLAY_SR / 2 / SAW_F);   // every multiple of 110 Hz below Nyquist
+  play(synth(sawPartial(K), PLAY_SR, 2), PLAY_SR, $("st-build"), `Playing all ${K} sine waves below Nyquist: the full sawtooth.`);
+});
+
+// Step 10: the FFT
+let fftExp = 14;
+function drawTree() {
+  const { ctx, w, h } = prep($("c-tree")), c = colors();
+  const levels = [[[0, 1, 2, 3, 4, 5, 6, 7]]];
+  while (levels[levels.length - 1][0].length > 1) {
+    levels.push(levels[levels.length - 1].flatMap(g => [g.filter((_, i) => i % 2 === 0), g.filter((_, i) => i % 2 === 1)]));
+  }
+  const rowH = h / levels.length, groupGap = 10, cellGap = 3;
+  const labels = ["8 samples", "evens · odds", "split again", "single samples"];
+  levels.forEach((groups, L) => {
+    const gaps = (groups.length - 1) * groupGap;
+    const cw = (w - gaps) / 8;
+    let x = 0;
+    const y = L * rowH + 18, boxH = Math.min(30, rowH - 24);
+    ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`; ctx.textAlign = "left";
+    ctx.fillText(labels[L], 0, y - 5);
+    groups.forEach((g, gi) => {
+      g.forEach(n => {
+        ctx.fillStyle = n % 2 === 0 ? c.accentSoft : c.bg;
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x + cellGap / 2, y, cw - cellGap, boxH, 5); else ctx.rect(x + cellGap / 2, y, cw - cellGap, boxH);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = c.ink; ctx.font = `500 12px ${c.mono}`; ctx.textAlign = "center";
+        ctx.fillText(`x${n}`, x + cw / 2, y + boxH / 2 + 4);
+        x += cw;
+      });
+      x += groupGap;
+    });
+  });
+}
+function drawFft() {
+  const N = 2 ** fftExp, direct = N * N, fast = N * fftExp;
+  $("o-fft").textContent = N.toLocaleString("en-US");
+  const rate = 1e8;   // a rough guess at steps per second for plain code on a phone
+  const time = s => s < 1e-3 ? `${+(s * 1e6).toPrecision(2)} µs` : s < 1 ? `${+(s * 1e3).toPrecision(2)} ms` : s < 120 ? `${+s.toPrecision(2)} s` : s < 7200 ? `${+(s / 60).toPrecision(2)} min` : `${+(s / 3600).toPrecision(2)} hours`;
+  $("r-fft").innerHTML = `Direct DFT: <span class="num">${direct.toLocaleString("en-US")}</span> steps. FFT: about <span class="num">${fast.toLocaleString("en-US")}</span>, <span class="num">${Math.round(direct / fast).toLocaleString("en-US")}×</span> fewer. At 100 million steps a second, that's <span class="num">${time(direct / rate)}</span> against <span class="num">${time(fast / rate)}</span>.`;
+}
+$("i-fft").addEventListener("input", e => { fftExp = +e.target.value; drawFft(); });
+
+function drawAll() { drawChord(); drawSpec(); drawMatch(); drawPhase(); drawMystery(); drawScan(); drawBins(); drawLeak(); drawBuild(); drawTree(); drawFft(); }
+let raf = 0;
+const redraw = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(drawAll); };
+window.addEventListener("resize", redraw);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+drawAll();
+</script>
