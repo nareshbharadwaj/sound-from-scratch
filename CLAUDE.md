@@ -41,7 +41,9 @@ a session.
 - Explain from first principles. Derive before you code: what is the
   quantity, why this formula, what would break without each term.
 - Ask the owner to predict a result before running the experiment, then run
-  it and compare. Surprises are where the learning is.
+  it and compare. Surprises are where the learning is. Ask for the
+  prediction in chat before pointing them at a reveal; on their own they
+  tend to read straight through.
 - Implement things from scratch first (NumPy in phase 1, PyTorch from
   phase 2). Use librosa, torchaudio or reference repos only to check our
   versions, never as a replacement.
@@ -77,6 +79,21 @@ a session.
 - Credentials come from environment variables: `MODAL_TOKEN_ID`,
   `MODAL_TOKEN_SECRET`, `WANDB_API_KEY`, `HF_TOKEN`. Never print them or
   write them to files.
+
+## Session environment
+
+- Only GitHub is reachable for downloads. Public-domain or CC-licensed
+  audio comes from `raw.githubusercontent.com` (librosa's example clips
+  live in the `librosa/data` repo; check the checksum against librosa's
+  `registry.txt`). Record licence and source in `pages/src/assets/README.md`.
+- Install per session as needed: `pip install -e ".[dev]"` (NumPy, pytest,
+  markdown), `soundfile` (reads OGG/FLAC), `imageio-ffmpeg` (its ffmpeg
+  decodes the owner's Voice Memos .m4a uploads), `matplotlib` (quick
+  checks), and use the preinstalled Playwright to screenshot pages at
+  400 px wide before publishing.
+- The owner's own recordings are personal: keep them in `outputs/`, show
+  them only on private artifact pages, and never commit them or put them
+  on the public site.
 
 ## Notes
 
