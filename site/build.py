@@ -34,6 +34,10 @@ LESSONS = [
          page="lesson-03-stft.html", code="code-03-stft.html", lab="lab-03-beats.html",
          notes="03-stft-and-spectrograms.md",
          blurb="Slicing a recording into windowed frames to draw a spectrogram, then reading a real voice in it."),
+    dict(n=4, title="Hearing Like an Ear", topic="The mel scale and mel spectrograms",
+         page="lesson-04-mel.html", code=None, lab=None,
+         notes="04-mel-spectrograms.md",
+         blurb="Bending the frequency axis to match hearing: the mel spectrogram that speech models read and write."),
 ]
 
 # The artifact skeleton's reset, plus room for the sticky navigation bar.

@@ -1,0 +1,889 @@
+<title>Hearing Like an Ear</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column of numbered steps; each step ends in a small hands-on figure. Same tokens as lessons 1–3. Spectrograms use one ramp from the surface through the accent to the ink; the selected mel band is drawn in the alias colour. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #151821;
+  --muted: #5a6273;
+  --line: #dde1e8;
+  --accent: #3245c4;
+  --accent-soft: #e6e9fa;
+  --alias: #c2410c;
+  --alias-soft: #fbe7dc;
+  --display: "Instrument Sans", "Avenir Next", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+    --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1116; --surface: #171a22; --ink: #e6e8ee; --muted: #9aa2b2; --line: #2a2f3b;
+  --accent: #8796f5; --accent-soft: #1f2545; --alias: #fb923c; --alias-soft: #3a2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.65 var(--body); }
+.wrap {
+  max-width: 40rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; }
+h2 { font-size: 1.35rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+p { margin: 0 0 14px; }
+.label { font: 600 0.72rem/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.lede { font-size: 1.1rem; margin-top: 12px; }
+.meta { font: 400 0.85rem/1.5 var(--ui); color: var(--muted); margin-top: 10px; }
+.toc { margin-top: 20px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: 400 0.92rem/1.6 var(--ui); }
+.toc ol { margin: 6px 0 0; padding-left: 1.4em; }
+
+.step { margin-top: 44px; scroll-margin-top: 12px; }
+.step-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.step-num { font: 500 0.85rem/1 var(--mono); color: var(--accent); flex: none; }
+.term { font-weight: 600; }
+.key { margin: 16px 0; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); font-size: 0.98rem; }
+.key strong { font-family: var(--ui); }
+.math {
+  font: 400 0.95rem/1.6 var(--mono); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 14px; margin: 14px 0; overflow-x: auto; white-space: nowrap;
+}
+.parts { display: grid; gap: 8px; margin: 12px 0 16px; padding: 0; list-style: none; }
+.parts li { display: grid; grid-template-columns: 5.4rem 1fr; gap: 10px; align-items: baseline; }
+.parts li > span { min-width: 0; }
+.parts code { font: 500 0.9rem var(--mono); color: var(--accent); background: none; padding: 0; }
+
+.fig { margin: 18px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.fig canvas, .reveal canvas { width: 100%; height: 170px; display: block; }
+.fig canvas.tall, .reveal canvas.tall { height: 240px; }
+.fig canvas.short, .reveal canvas.short { height: 110px; }
+.fig canvas.strip, .reveal canvas.strip { height: 64px; }
+.readout { font: 500 0.92rem/1.45 var(--ui); margin: 0; }
+.readout .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.control { display: grid; gap: 6px; }
+.control-head { display: flex; justify-content: space-between; gap: 8px; font: 500 0.85rem var(--ui); }
+.control-head output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { font: 500 0.88rem/1 var(--ui); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.play { background: var(--alias-soft); border-color: transparent; }
+.status { font: 400 0.82rem/1.4 var(--ui); color: var(--muted); min-height: 1.1em; margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 0.8rem/1.3 var(--ui); color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+.ramp { display: flex; align-items: center; gap: 8px; font: 400 0.78rem/1 var(--ui); color: var(--muted); }
+.ramp i { flex: 1; max-width: 160px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--surface), var(--accent), var(--ink)); border: 1px solid var(--line); }
+.sublabel { font: 600 0.8rem/1.2 var(--ui); color: var(--ink); margin: 0 0 -6px; }
+
+.quiz { display: grid; gap: 10px; margin: 16px 0; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.q p { margin: 0; }
+.q .answer { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; font-size: 0.96rem; }
+dl.gloss { display: grid; gap: 10px; margin: 14px 0 0; }
+dl.gloss dt { font: 600 0.95rem var(--ui); }
+dl.gloss dd { margin: 2px 0 0; }
+.next { margin-top: 18px; padding: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.next ul { margin: 8px 0 0; padding-left: 1.2em; }
+.next li { margin: 6px 0; }
+footer { margin-top: 48px; font: 400 0.82rem/1.5 var(--ui); color: var(--muted); display: grid; gap: 8px; }
+footer p { margin: 0; }
+.predict { margin: 16px 0; padding: 14px; border-radius: 12px; border: 1px dashed var(--accent); display: grid; gap: 10px; }
+.predict p { margin: 0; }
+.predict .label { color: var(--accent); }
+.predict .reveal { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; display: grid; gap: 10px; }
+.predict .reveal p { margin: 0; }
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+code { font: 400 0.88em var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+</style>
+
+<main class="wrap">
+<header>
+  <div class="label">Sound From Scratch · Phase 1 · Lesson 4</div>
+  <h1 style="margin-top:8px">Hearing Like an Ear</h1>
+  <p class="lede">A spectrogram spaces its rows evenly in hertz. Your ears don't hear that way: they're fussy about low notes and relaxed about high ones. This lesson bends the spectrogram's frequency axis to match, which gives the mel spectrogram, the picture most speech models read and write.</p>
+  <p class="meta">About 40 minutes. Builds on lesson 3: the spectrogram, decibels, harmonics and formants, and rebuilding sound with random phase. Headphones help, especially for the high notes and the voice.</p>
+  <nav class="toc" aria-label="Steps">
+    <div class="label">Steps</div>
+    <ol>
+      <li><a href="#s1">Same gap, different jump</a></li>
+      <li><a href="#s2">A ladder that sounds even</a></li>
+      <li><a href="#s3">The mel scale</a></li>
+      <li><a href="#s4">Where a spectrogram spends its rows</a></li>
+      <li><a href="#s5">Bands instead of rows</a></li>
+      <li><a href="#s6">One frame, band by band</a></li>
+      <li><a href="#s7">The mel spectrogram</a></li>
+      <li><a href="#s8">What the bands throw away</a></li>
+      <li><a href="#s9">The formula</a></li>
+      <li><a href="#s10">Why speech models use it</a></li>
+    </ol>
+  </nav>
+</header>
+
+<!-- 1 -->
+<section class="step" id="s1">
+  <div class="step-head"><span class="step-num">1</span><h2>Same gap, different jump</h2></div>
+  <p>Here are two pairs of notes. In each pair the second note is exactly 100 Hz higher than the first. The gap in hertz is the same.</p>
+  <div class="predict">
+    <div class="label">Predict first</div>
+    <p>Will the two pairs sound like the same size of jump? If not, which one sounds bigger?</p>
+  </div>
+  <div class="fig">
+    <div class="buttons"><button class="btn play" id="p-low">Play 300 → 400 Hz</button><button class="btn play" id="p-high">Play 4,000 → 4,100 Hz</button></div>
+    <p class="status" id="st-pairs" aria-live="polite"></p>
+  </div>
+  <details class="predict"><summary class="btn">After you've listened</summary>
+    <div class="reveal">
+      <p>The low pair is an obvious jump, about the gap between the first two notes of "Here Comes the Bride". The high pair barely moves: you can hear that the second note is a touch higher, but only just.</p>
+      <p>What your ear notices is the <span class="term">ratio</span> between the notes. 400 ÷ 300 is 1.33: the second note is 33% higher. 4,100 ÷ 4,000 is 1.025: just 2.5% higher. The same 100 Hz is a big step low down and a tiny one up high.</p>
+    </div>
+  </details>
+  <div class="key"><strong>Key idea:</strong> ears judge the distance between pitches by their ratio, not their difference in hertz.</div>
+</section>
+
+<!-- 2 -->
+<section class="step" id="s2">
+  <div class="step-head"><span class="step-num">2</span><h2>A ladder that sounds even</h2></div>
+  <p>Musicians have known this for centuries. Going up an <span class="term">octave</span> means doubling the frequency: 110, 220, 440, 880 Hz are all the note A, each one octave higher. On a piano the keys are evenly spaced, but each key is about 6% higher than the one before, so the frequencies are spaced by ratios.</p>
+  <p>Here are two ladders of eight notes, both from 300 Hz to 6,600 Hz. The first climbs in equal steps of hertz: 900 Hz each time. The second climbs in equal ratios: each note is 1.56 times the one before. The dots show where each note sits.</p>
+  <div class="fig">
+    <canvas id="c-ladder" class="short" aria-label="Two ladders of notes on a frequency axis"></canvas>
+    <div class="buttons"><button class="btn play" id="p-ladHz">Play: equal steps in Hz</button><button class="btn play" id="p-ladMel">Play: equal ratios</button></div>
+    <p class="status" id="st-ladder" aria-live="polite"></p>
+    <p class="readout" id="r-ladder"></p>
+  </div>
+  <p>The first ladder starts with a huge leap, two whole octaves, then its steps shrink until the last few sound almost the same. The second ladder's notes crowd together at the bottom and spread out at the top, yet each step sounds about as big as the last.</p>
+  <div class="key"><strong>Key idea:</strong> to sound evenly spaced, notes must be packed close together low down and spread far apart up high.</div>
+</section>
+
+<!-- 3 -->
+<section class="step" id="s3">
+  <div class="step-head"><span class="step-num">3</span><h2>The mel scale</h2></div>
+  <p>So a ruler for pitch should count ratios. Hearing research refined that idea into the <span class="term">mel scale</span> (from "melody"). In the 1930s researchers played people a tone and asked them to set a second tone to sound half as high. From the answers they built a scale where equal distances sound equal. Its unit is the <span class="term">mel</span>, and it's pinned so that 1,000 Hz is 1,000 mels.</p>
+  <p>The curve below converts hertz to mels. Move the slider and watch how much 100 Hz is worth at different heights. The dashed line is what the curve would be if mels were just hertz.</p>
+  <div class="fig">
+    <canvas id="c-curve" class="tall" aria-label="The mel scale: mels against hertz"></canvas>
+    <div class="control">
+      <div class="control-head"><label for="i-curve">Frequency</label><output id="o-curve" for="i-curve"></output></div>
+      <input id="i-curve" type="range" min="0" max="7900" step="50" value="300">
+    </div>
+    <p class="readout" id="r-curve"></p>
+  </div>
+  <p>Above about 1,000 Hz the curve flattens: 100 Hz is worth less and less, and each octave adds a similar number of mels, as on the piano. Below 1,000 Hz the curve stays near the dashed line: there, mels are close to plain hertz, and 100 Hz is worth roughly 100 mels wherever you are. So the mel scale counts ratios up high and hertz down low.</p>
+  <p>The reason is in the ear itself. Inside the cochlea, a coiled tube in the inner ear, a membrane runs along its length, and each spot on it shakes most for one frequency. Up high, each octave gets about the same length of membrane, so ratios are what count. Low down, the spacing is closer to even in hertz. The mel scale is a rough map of that membrane.</p>
+  <div class="key"><strong>Key idea:</strong> the mel scale spaces pitch the way the ear does: close to plain hertz below 1,000 Hz and close to counting ratios above.</div>
+</section>
+
+<!-- 4 -->
+<section class="step" id="s4">
+  <div class="step-head"><span class="step-num">4</span><h2>Where a spectrogram spends its rows</h2></div>
+  <p>Now look at lesson 3's spectrogram of the voice through this lens. It has 512-sample frames at 16,000 samples per second, so 257 rows from 0 to 8,000 Hz, each row 31.25 Hz above the last. The rows are evenly spaced in hertz.</p>
+  <div class="predict">
+    <div class="label">Predict first</div>
+    <p>To your ear, 4,000–8,000 Hz is a single octave, the same size of step as 300–600 Hz. How many of the 257 rows does the spectrogram spend on it?</p>
+  </div>
+  <details class="predict"><summary class="btn">Show the answer</summary>
+    <div class="reveal">
+      <canvas id="c-rows1" class="strip" aria-label="How the 257 rows are spread over frequency"></canvas>
+      <p><strong>129 rows, half the picture,</strong> go to the top octave. Everything below 1,000 Hz, where the voice's pitch and its first formant live, gets 32. The picture spends most of its detail where your ear has the least.</p>
+    </div>
+  </details>
+  <div class="key"><strong>Key idea:</strong> evenly spaced rows give high frequencies far more detail than hearing uses, and low frequencies comparatively little.</div>
+</section>
+
+<!-- 5 -->
+<section class="step" id="s5">
+  <div class="step-head"><span class="step-num">5</span><h2>Bands instead of rows</h2></div>
+  <p>The fix is to regroup the rows into <span class="term">bands</span> that are evenly spaced in mels: narrow ones low down, wide ones up high. Each band is a triangle. It counts the rows near its centre fully and the rows near its edges a little, and its edges reach the centres of its neighbours, so no frequency falls between bands. A band's value is the <span class="term">weighted average</span> of the rows under its triangle. The set of triangles is a <span class="term">mel filterbank</span>.</p>
+  <p>Pick how many bands, and slide to pick one. Then switch the axis to mels.</p>
+  <div class="fig">
+    <canvas id="c-bank" class="tall" aria-label="Triangular mel bands"></canvas>
+    <div class="buttons" id="b-nmels" role="group" aria-label="Number of bands">
+      <button class="btn" data-n="10">10 bands</button>
+      <button class="btn" data-n="20">20</button>
+      <button class="btn" data-n="40">40</button>
+      <button class="btn" data-n="80">80</button>
+    </div>
+    <div class="buttons" id="b-axis" role="group" aria-label="Axis">
+      <button class="btn" data-a="hz">Hertz axis</button>
+      <button class="btn" data-a="mel">Mel axis</button>
+    </div>
+    <div class="control">
+      <div class="control-head"><label for="i-band">Band</label><output id="o-band" for="i-band"></output></div>
+      <input id="i-band" type="range" min="0" max="39" step="1" value="12">
+    </div>
+    <p class="readout" id="r-bank"></p>
+    <canvas id="c-rows2" class="short" aria-label="Rows of the plain spectrogram and mel bands, by octave"></canvas>
+  </div>
+  <p>On the hertz axis the triangles widen as they climb. On the mel axis they're all the same: equal slices of pitch as you hear it. The bars at the bottom compare how the plain rows and the bands spread over the octaves. Speech models nearly always use 80 bands.</p>
+  <div class="key"><strong>Key idea:</strong> a mel filterbank is a row of overlapping triangles, evenly spaced in mels. Each one averages the spectrogram's rows beneath it into one number.</div>
+</section>
+
+<!-- 6 -->
+<section class="step" id="s6">
+  <div class="step-head"><span class="step-num">6</span><h2>One frame, band by band</h2></div>
+  <p>Here is one frame of the voice, in the middle of a vowel, with its 257 strengths in decibels. Slide through the 80 bands to see which rows each one averages. The lower picture shows the 80 results side by side, evenly spaced as the mel scale spaces them.</p>
+  <div class="fig">
+    <p class="sublabel">One frame: 257 rows</p>
+    <canvas id="c-frame" aria-label="One frame's spectrum with one band's triangle"></canvas>
+    <div class="buttons" id="b-zoom" role="group" aria-label="Range">
+      <button class="btn" data-z="8000">0–8,000 Hz</button>
+      <button class="btn" data-z="2000">Zoom to 0–2,000 Hz</button>
+    </div>
+    <div class="control">
+      <div class="control-head"><label for="i-fband">Band</label><output id="o-fband" for="i-fband"></output></div>
+      <input id="i-fband" type="range" min="0" max="79" step="1" value="10">
+    </div>
+    <p class="sublabel">The same frame: 80 bands</p>
+    <canvas id="c-melframe" class="short" aria-label="The frame's 80 band values"></canvas>
+    <p class="readout" id="r-frame"></p>
+  </div>
+  <p>Zoomed in, the lowest bands are narrow enough that each harmonic, each peak 200 Hz apart, gets bands of its own, so the bands still show the peaks. High up, one band swallows several harmonics at once and only the overall shape, the formants, survives.</p>
+  <div class="key"><strong>Key idea:</strong> 257 numbers per frame become 80. Low bands keep the harmonics apart; high bands keep only the outline.</div>
+</section>
+
+<!-- 7 -->
+<section class="step" id="s7">
+  <div class="step-head"><span class="step-num">7</span><h2>The mel spectrogram</h2></div>
+  <p>Do that for every frame and stand the results side by side, as in lesson 3, and you get a <span class="term">mel spectrogram</span>: 80 rows instead of 257, with the rows evenly spaced in mels.</p>
+  <div class="predict">
+    <div class="label">Predict first</div>
+    <p>In lesson 3's spectrogram, her harmonic stripes fill roughly the bottom fifth of the picture. In the mel spectrogram, what happens to them: same size, bigger, or blurred away?</p>
+  </div>
+  <details class="predict"><summary class="btn">Show the mel spectrogram</summary>
+    <div class="reveal">
+      <canvas id="c-voice" class="tall" aria-label="Spectrogram of the voice, plain or mel"></canvas>
+      <div class="ramp"><span>−70 dB</span><i></i><span>0 dB</span></div>
+      <div class="buttons" id="b-voice" role="group" aria-label="Picture">
+        <button class="btn" data-v="plain">Plain: 257 rows</button>
+        <button class="btn" data-v="mel">Mel: 80 bands</button>
+      </div>
+      <div class="buttons"><button class="btn play" id="p-voice">Play the voice</button></div>
+      <p class="status" id="st-voice" aria-live="polite"></p>
+      <p>The stripes grow to fill about half the picture, and the lowest ones stay sharp: the mel picture gives the region your ear cares most about far more room. Above about 2,500 Hz the stripes melt into smooth bands, because each mel band there is wider than the 200 Hz between harmonics. The formants, the bright regions, are still there. The hiss at the top shrinks to a few rows.</p>
+    </div>
+  </details>
+  <p>Like lesson 3's pictures, this one is in decibels. Models use the same idea in a slightly different unit: the plain natural logarithm of each band's value, with tiny values raised to a floor first so silence doesn't become minus infinity. That's called a <span class="term">log-mel spectrogram</span>.</p>
+  <div class="key"><strong>Key idea:</strong> a mel spectrogram is a spectrogram with its rows regrouped into mel bands. It gives low frequencies room and summarises high ones.</div>
+</section>
+
+<!-- 8 -->
+<section class="step" id="s8">
+  <div class="step-head"><span class="step-num">8</span><h2>What the bands throw away</h2></div>
+  <p>Squeezing 257 rows into 80 loses detail. How much can you hear? To listen to a mel spectrogram, first spread each band back over the rows it covered: every row takes the value of the bands over it, blended by the triangles' heights. Detail inside a band can't come back.</p>
+  <p>Then the strengths need phases. As in lesson 3's step 9, the picture has none, so every version below gets the same random phases. That's why even the 257-row version sounds rough. Compare each one to it, not to the original.</p>
+  <div class="predict">
+    <div class="label">Predict first</div>
+    <p>Going down from 257 rows to 80, 40, 20 and 10 bands: when does her pitch fade, leaving a whisper? And will 80 bands sound much worse than 257 rows?</p>
+  </div>
+  <details class="predict"><summary class="btn">Show the experiment</summary>
+    <div class="reveal">
+      <p class="sublabel" id="l-spread">What the rebuild starts from</p>
+      <canvas id="c-spread" class="tall" aria-label="Strengths spread back from the mel bands"></canvas>
+      <div class="buttons" id="b-spread" role="group" aria-label="Detail kept">
+        <button class="btn" data-n="0">All 257 rows</button>
+        <button class="btn" data-n="80">80 bands</button>
+        <button class="btn" data-n="40">40</button>
+        <button class="btn" data-n="20">20</button>
+        <button class="btn" data-n="10">10</button>
+      </div>
+      <div class="buttons"><button class="btn play" id="p-spread">Play this version</button><button class="btn play" id="p-orig">Play the original</button></div>
+      <p class="status" id="st-spread" aria-live="polite"></p>
+      <p class="readout" id="r-spread"></p>
+      <p>80 bands sound almost the same as all 257 rows: the detail they drop is detail your ear barely uses. At 40 the voice is a little duller. At 20 the low bands get too wide to keep the harmonics apart, the stripes vanish, and the pitch starts to fade. At 10 it's a whisper, yet most of the words are still there, carried by the formants and the timing.</p>
+      <p>The pitch strength above measures how closely a short stretch of sound matches itself shifted by one buzz of the vocal cords: near 1 for a clear, steady pitch, near 0 for noise. It's measured on the vowel from lesson 3's step 7.</p>
+    </div>
+  </details>
+  <div class="key"><strong>Key idea:</strong> 80 mel bands keep nearly everything the ear needs. Too few bands lose the harmonics, and with them the pitch.</div>
+</section>
+
+<!-- 9 -->
+<section class="step" id="s9">
+  <div class="step-head"><span class="step-num">9</span><h2>The formula</h2></div>
+  <p>The mel scale most code uses comes from the HTK speech toolkit:</p>
+  <div class="math">mel(f) = 2595 × log<sub>10</sub>(1 + f ÷ 700)</div>
+  <ul class="parts">
+    <li><code>f ÷ 700</code><span>Below 700 Hz this is small, and log(1 + small) is almost the small number itself, so mels grow in step with hertz.</span></li>
+    <li><code>log₁₀</code><span>Well above 700 Hz the "1 +" hardly matters, so mels grow with log(f): every doubling adds the same amount.</span></li>
+    <li><code>2595</code><span>Scales the result so 1,000 Hz comes out at 1,000 mels.</span></li>
+  </ul>
+  <p>To build B bands between f<sub>min</sub> and f<sub>max</sub>, space B + 2 points evenly in mels and turn them back into hertz: e<sub>0</sub>, e<sub>1</sub>, … e<sub>B+1</sub>. Band b rises from 0 at e<sub>b</sub> to 1 at e<sub>b+1</sub> and falls back to 0 at e<sub>b+2</sub>. Writing F[b, k] for band b's weight on row k, scaled so each band's weights add up to 1, the mel spectrogram is</p>
+  <div class="math">M[b, m] = Σ<sub>k</sub> F[b, k] × |X[k, m]|</div>
+  <p>where |X[k, m]| is lesson 3's spectrogram: row k, frame m. Models then take ln(max(M, 0.00001)).</p>
+  <p>Check yourself before revealing:</p>
+  <div class="quiz">
+    <div class="q">
+      <p>How many mels is 700 Hz?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">2595 × log<sub>10</sub>(2) = <strong>781 mels</strong>. 700 Hz is where f ÷ 700 = 1, the middle of the bend.</p>
+      </details>
+    </div>
+    <div class="q">
+      <p>80 bands from 0 to 8,000 Hz (2,840 mels). How far apart are the band centres, in mels? And roughly in hertz near the bottom?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">2,840 ÷ 81 = <strong>35 mels</strong>. Near 0 Hz a mel is about 0.62 Hz, so the centres are about <strong>22 Hz</strong> apart there. Up near 7,000 Hz they're about 240 Hz apart.</p>
+      </details>
+    </div>
+    <div class="q">
+      <p>A common text-to-speech setting is 22,050 samples per second, a hop of 256 and 80 bands. How many numbers per second does a model have to produce, compared with the samples themselves?</p>
+      <details><summary class="btn" style="display:inline-block">Show answer</summary>
+        <p class="answer">22,050 ÷ 256 = 86 frames a second, × 80 bands = <strong>about 6,900 numbers a second</strong>, against 22,050 samples. Three times fewer, and each one changes smoothly, which makes them much easier to predict.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="step" id="s10">
+  <div class="step-head"><span class="step-num">10</span><h2>Why speech models use it</h2></div>
+  <ul class="parts">
+    <li><code>Target</code><span>Tacotron 2 turns text into an 80-band log-mel spectrogram, one frame every 12.5 ms. A vocoder then turns the mel spectrogram into sound. Phase 5 builds one.</span></li>
+    <li><code>Vocoder</code><span>HiFi-GAN takes those 80 bands and invents everything step 8 couldn't: the phases and the fine detail inside each band. Phase 4 builds one.</span></li>
+    <li><code>Loss</code><span>Vocoders and codecs compare mel spectrograms of their output and the real audio, so mistakes count roughly as much as a listener would notice them.</span></li>
+    <li><code>Listening</code><span>Speech recognisers like Whisper read 80 log-mel bands too: 25 ms frames every 10 ms at 16,000 samples per second.</span></li>
+  </ul>
+  <div class="next">
+    <div class="label">In the repo</div>
+    <ul>
+      <li><code>src/sfs/mel.py</code>: the mel scale, the filterbank, mel and log-mel spectrograms, and spreading bands back over the rows.</li>
+      <li><code>tests/test_mel.py</code>: checks of this page's claims, including that 1,000 Hz is 1,000 mels, that the triangles add up to 1, that 200 and 300 Hz land in different bands while 6,000 and 6,100 Hz share one, and a match with librosa's filterbank.</li>
+      <li><code>notes/lessons/04-mel-spectrograms.md</code>: derivations and exercises.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="step" id="glossary">
+  <div class="step-head"><h2>Words from this lesson</h2></div>
+  <dl class="gloss">
+    <div><dt>Ratio</dt><dd>One frequency divided by another. Equal ratios sound like equal steps.</dd></div>
+    <div><dt>Octave</dt><dd>A doubling of frequency. Notes an octave apart share a name.</dd></div>
+    <div><dt>Mel scale</dt><dd>A ruler for pitch where equal distances sound equal. Close to hertz below 1,000 Hz, close to counting ratios above.</dd></div>
+    <div><dt>Cochlea</dt><dd>The coiled tube in the inner ear where each spot responds to one frequency.</dd></div>
+    <div><dt>Band</dt><dd>A range of frequencies grouped into one number.</dd></div>
+    <div><dt>Mel filterbank</dt><dd>A row of overlapping triangles, evenly spaced in mels, that turns a frame's rows into bands.</dd></div>
+    <div><dt>Weighted average</dt><dd>An average where some values count more than others. Here, rows near a band's centre count most.</dd></div>
+    <div><dt>Mel spectrogram</dt><dd>A spectrogram with its rows regrouped into mel bands. Usually 80.</dd></div>
+    <div><dt>Log-mel spectrogram</dt><dd>The natural log of a mel spectrogram, with a floor for silence. What most speech models read and write.</dd></div>
+  </dl>
+</section>
+
+<footer>
+  <p>Code for this lesson: <code>src/sfs/mel.py</code>. Notes and exercises: <code>notes/lessons/04-mel-spectrograms.md</code>. Previous: <a href="https://claude.ai/artifact/Q6vLsTectqLmXyoiAUJ1yZ">lesson 3</a>.</p>
+  <p>Voice: LibriSpeech (openslr.org/12), utterance 198-209-0000, Jane Austen's <em>Sense and Sensibility</em>, chapter 18, read by Heather Barnett. Licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Trimmed to 2.6 seconds and normalized.</p>
+</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const TAU = 2 * Math.PI;
+const fmt = hz => `${Math.round(hz).toLocaleString("en-US")} Hz`;
+const num = (x, d = 0) => x.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+function colors() {
+  const s = getComputedStyle(document.documentElement);
+  const v = n => s.getPropertyValue(n).trim();
+  return { ink: v("--ink"), muted: v("--muted"), line: v("--line"), accent: v("--accent"), accentSoft: v("--accent-soft"), alias: v("--alias"), aliasSoft: v("--alias-soft"), bg: v("--bg"), surface: v("--surface"), mono: v("--mono"), ui: v("--ui") };
+}
+function prep(canvas) {
+  const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+const hex = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+const visible = el => el.getClientRects().length > 0;
+
+// ---------- Signal processing: the same steps as src/sfs/stft.py and src/sfs/mel.py ----------
+// In-place radix-2 FFT on separate real and imaginary arrays (length a power of 2).
+function fftInPlace(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -TAU / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const a = i + k, b = a + len / 2;
+        const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        [cr, ci] = [cr * wr - ci * wi, cr * wi + ci * wr];
+      }
+    }
+  }
+}
+const hann = N => Float64Array.from({ length: N }, (_, n) => 0.5 - 0.5 * Math.cos(TAU * n / N));
+
+// STFT magnitudes with frames centred on multiples of the hop (n_fft/2 zeros padded at each end).
+function stft(x, N, H) {
+  const pad = N / 2, win = hann(N), total = x.length + 2 * pad;
+  const nFrames = 1 + Math.floor((total - N) / H), frames = [];
+  for (let m = 0; m < nFrames; m++) {
+    const re = new Float64Array(N), im = new Float64Array(N);
+    for (let n = 0; n < N; n++) {
+      const i = m * H + n - pad;
+      re[n] = (i >= 0 && i < x.length ? x[i] : 0) * win[n];
+    }
+    fftInPlace(re, im);
+    const mag = new Float32Array(N / 2 + 1);
+    for (let k = 0; k <= N / 2; k++) mag[k] = Math.hypot(re[k], im[k]);
+    frames.push(mag);
+  }
+  return { frames, N, H, len: x.length };
+}
+
+// Inverse STFT from strengths and a phase for every (frame, row), by overlap-add.
+function istft(spec, phase) {
+  const { frames, N, H, len } = spec, pad = N / 2, win = hann(N);
+  const total = N + H * (frames.length - 1), out = new Float64Array(total), norm = new Float64Array(total);
+  frames.forEach((mag, m) => {
+    const re = new Float64Array(N), im = new Float64Array(N);
+    for (let k = 0; k <= N / 2; k++) {
+      const a = phase(k, m);
+      let r = mag[k] * Math.cos(a), i = mag[k] * Math.sin(a);
+      if (k === 0 || k === N / 2) { r = mag[k] * Math.sign(Math.cos(a)); i = 0; }
+      re[k] = r; im[k] = -i;                          // conjugate, for the inverse
+      if (k > 0 && k < N / 2) { re[N - k] = r; im[N - k] = i; }
+    }
+    fftInPlace(re, im);
+    for (let n = 0; n < N; n++) { out[m * H + n] += (re[n] / N) * win[n]; norm[m * H + n] += win[n] * win[n]; }
+  });
+  const y = new Float32Array(len);
+  for (let i = 0; i < len; i++) { const j = i + pad, d = norm[j]; y[i] = d > 1e-10 ? out[j] / d : 0; }
+  return y;
+}
+
+const hzToMel = f => 2595 * Math.log10(1 + f / 700);
+const melToHz = m => 700 * (10 ** (m / 2595) - 1);
+// The n+2 edges, evenly spaced in mels. Band b rises from edge b, peaks at b+1 and falls to 0 at b+2.
+const bandEdges = (n, fmax) => Array.from({ length: n + 2 }, (_, i) => melToHz(i * hzToMel(fmax) / (n + 1)));
+// Triangles of height 1 (tri) and the same rows divided by their sums (avg), over the STFT's N/2+1 rows.
+function filterbank(sr, N, n) {
+  const e = bandEdges(n, sr / 2), tri = [], avg = [];
+  for (let b = 0; b < n; b++) {
+    const row = new Float64Array(N / 2 + 1);
+    let sum = 0;
+    for (let k = 0; k <= N / 2; k++) {
+      const f = k * sr / N;
+      row[k] = Math.max(0, Math.min((f - e[b]) / (e[b + 1] - e[b]), (e[b + 2] - f) / (e[b + 2] - e[b + 1])));
+      sum += row[k];
+    }
+    tri.push(row); avg.push(row.map(v => v / (sum || 1)));
+  }
+  return { tri, avg, edges: e, n };
+}
+const applyBank = (fb, mag) => Float32Array.from(fb.avg, row => { let s = 0; for (let k = 0; k < row.length; k++) s += row[k] * mag[k]; return s; });
+// Spread bands back over the rows: each row blends the bands over it, weighted by the triangles' heights.
+function spreadBack(fb, bands, nRows) {
+  const out = new Float32Array(nRows);
+  for (let k = 0; k < nRows; k++) {
+    let s = 0, wsum = 0;
+    for (let b = 0; b < fb.n; b++) { const w = fb.tri[b][k]; s += w * bands[b]; wsum += w; }
+    out[k] = wsum > 0 ? s / wsum : 0;
+  }
+  return out;
+}
+
+// ---------- Drawing ----------
+// A heat map of frames (columns) by rows, rows evenly spaced bottom to top, in dB from -70 to 0 relative to `peak`.
+class HeatView {
+  constructor(canvas) { this.canvas = canvas; this.playhead = null; this.image = null; }
+  set(frames, o) { this.frames = frames; this.o = o; this.image = null; this.render(); }
+  buildImage() {
+    const frames = this.frames, nRows = frames[0].length, c = colors();
+    let peak = this.o.peak ?? 0;
+    if (!peak) for (const f of frames) for (const v of f) peak = Math.max(peak, v);
+    const lo = hex(c.surface), mid = hex(c.accent), hi = hex(c.ink);
+    const ramp = t => t < 0.5 ? lo.map((v, i) => v + (mid[i] - v) * (t / 0.5)) : mid.map((v, i) => v + (hi[i] - v) * ((t - 0.5) / 0.5));
+    const off = document.createElement("canvas");
+    off.width = frames.length; off.height = nRows;
+    const ctx = off.getContext("2d"), img = ctx.createImageData(frames.length, nRows);
+    frames.forEach((f, m) => {
+      for (let k = 0; k < nRows; k++) {
+        // Decibels from -70 (weakest colour) to 0; the power curve keeps faint background noise pale.
+        const t = Math.max(0, Math.min(1, (20 * Math.log10(f[k] / peak + 1e-12) + 70) / 70)) ** 1.7;
+        const [r, g, b] = ramp(t), p = ((nRows - 1 - k) * frames.length + m) * 4;
+        img.data[p] = r; img.data[p + 1] = g; img.data[p + 2] = b; img.data[p + 3] = 255;
+      }
+    });
+    ctx.putImageData(img, 0, 0);
+    this.image = off;
+  }
+  render() {
+    if (!this.frames || !visible(this.canvas)) return;
+    if (!this.image) this.buildImage();
+    const { ctx, w, h } = prep(this.canvas), c = colors(), { dur, ticks } = this.o;
+    const left = 34, right = w - 4, top = 4, bottom = h - 18;
+    ctx.imageSmoothingEnabled = this.frames[0].length > 120;
+    ctx.drawImage(this.image, left, top, right - left, bottom - top);
+    ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.strokeRect(left + 0.5, top + 0.5, right - left - 1, bottom - top - 1);
+    ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`; ctx.textAlign = "right";
+    for (const { label, frac } of ticks) {
+      const y = bottom - frac * (bottom - top);
+      ctx.fillText(label, left - 4, Math.max(top + 8, Math.min(bottom, y + 4)));
+      ctx.strokeStyle = c.muted; ctx.beginPath(); ctx.moveTo(left - 3, y); ctx.lineTo(left, y); ctx.stroke();
+    }
+    ctx.textAlign = "left"; ctx.fillText("0 s", left, h - 2);
+    ctx.textAlign = "right"; ctx.fillText(`${dur.toFixed(1)} s`, right, h - 2);
+    if (this.playhead != null) {
+      const x = left + (this.playhead / dur) * (right - left);
+      ctx.strokeStyle = c.alias; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+    }
+  }
+}
+const kLabel = f => f === 0 ? "0" : f < 1000 ? `${f}` : `${f / 1000}k`;
+// Tick positions for a picture whose rows are the STFT's bins (even in Hz) or mel bands (even in mels).
+const plainTicks = fmax => [0, 2000, 4000, 6000, 8000].map(f => ({ label: kLabel(f), frac: f / fmax }));
+function melTicks(n, fmax) {
+  const step = hzToMel(fmax) / (n + 1);
+  // Band b's centre is at (b+1)*step mels and is drawn at the middle of row b, (b + 0.5)/n of the height.
+  return [0, 500, 1000, 2000, 4000, 8000].map(f => ({ label: kLabel(f), frac: Math.max(0, Math.min(1, (hzToMel(f) / step - 0.5) / n)) }));
+}
+
+// Horizontal bars of row counts per octave-ish region.
+const REGIONS = [[0, 1000, "0–1k"], [1000, 2000, "1–2k"], [2000, 4000, "2–4k"], [4000, 8000, "4–8k"]];
+function drawRows(canvas, bars) {
+  if (!visible(canvas)) return;
+  const { ctx, w, h } = prep(canvas), c = colors(), lane = h / bars.length, labelW = 0;
+  bars.forEach((bar, i) => {
+    const total = bar.counts.reduce((a, b) => a + b, 0), y = i * lane + 16, bh = lane - 22;
+    ctx.fillStyle = c.muted; ctx.font = `600 11px ${c.ui}`; ctx.textAlign = "left";
+    ctx.fillText(bar.label, 0, i * lane + 11);
+    let x = labelW;
+    bar.counts.forEach((n, j) => {
+      const bw = (n / total) * (w - labelW);
+      ctx.fillStyle = j % 2 ? c.accentSoft : c.accent; ctx.globalAlpha = j % 2 ? 1 : 0.75 - j * 0.12;
+      ctx.fillRect(x, y, Math.max(0, bw - 2), bh);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = j % 2 ? c.ink : c.surface; ctx.font = `11px ${c.mono}`; ctx.textAlign = "center";
+      const text = bw > 64 ? `${REGIONS[j][2]}: ${n}` : bw > 22 ? `${n}` : "";
+      ctx.fillText(text, x + bw / 2 - 1, y + bh / 2 + 4);
+      x += bw;
+    });
+  });
+}
+const rowCounts = freqs => REGIONS.map(([lo, hi], j) => freqs.filter(f => f >= lo && (j === REGIONS.length - 1 ? f <= hi : f < hi)).length);
+
+// ---------- Audio: WAV data URI through an <audio> element (iOS plays it with the silent switch on) ----------
+function wavDataUri(samples, sr) {
+  const n = samples.length, bytes = new Uint8Array(44 + n * 2), v = new DataView(bytes.buffer);
+  const text = (o, s) => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
+  text(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); text(8, "WAVE");
+  text(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  text(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return "data:audio/wav;base64," + btoa(bin);
+}
+const player = new Audio();
+let statusEl = null, follow = null, followRaf = 0;
+function stopFollow() {
+  cancelAnimationFrame(followRaf);
+  if (follow) { follow.view.playhead = null; follow.view.render(); follow = null; }
+}
+player.addEventListener("ended", () => { if (statusEl) statusEl.textContent = ""; stopFollow(); });
+function play(samples, sr, el, message, view = null) {
+  if (statusEl && statusEl !== el) statusEl.textContent = "";
+  statusEl = el; stopFollow();
+  player.pause(); player.src = wavDataUri(samples, sr);
+  el.textContent = "Starting…";
+  player.play().then(() => {
+    el.textContent = message;
+    if (view) {
+      follow = { view };
+      const tick = () => { if (!follow) return; view.playhead = player.currentTime; view.render(); followRaf = requestAnimationFrame(tick); };
+      followRaf = requestAnimationFrame(tick);
+    }
+  }).catch(err => { el.textContent = `Your browser didn't play the sound (${err.name}). Check the volume and tap again.`; });
+}
+// A run of sine notes, each faded in and out over 15 ms so the joins don't click.
+const TONE_SR = 22050;
+function notes(freqs, dur, gap) {
+  const n = Math.round(dur * TONE_SR), g = Math.round(gap * TONE_SR), fade = Math.round(0.015 * TONE_SR);
+  const out = new Float32Array(freqs.length * (n + g));
+  freqs.forEach((f, j) => {
+    for (let i = 0; i < n; i++) {
+      const env = Math.min(1, i / fade, (n - 1 - i) / fade);
+      out[j * (n + g) + i] = 0.3 * env * Math.sin(TAU * f * i / TONE_SR);
+    }
+  });
+  return out;
+}
+
+// ---------- Step 1: same gap, different jump ----------
+$("p-low").addEventListener("click", () => play(notes([300, 400], 0.7, 0.2), TONE_SR, $("st-pairs"), "Playing 300 Hz, then 400 Hz."));
+$("p-high").addEventListener("click", () => play(notes([4000, 4100], 0.7, 0.2), TONE_SR, $("st-pairs"), "Playing 4,000 Hz, then 4,100 Hz."));
+
+// ---------- Step 2: two ladders ----------
+const LAD_LO = 300, LAD_HI = 6600, LAD_N = 8, LAD_DUR = 0.32, LAD_GAP = 0.06;
+const ladHz = Array.from({ length: LAD_N }, (_, i) => LAD_LO + i * (LAD_HI - LAD_LO) / (LAD_N - 1));
+const ladRatio = Array.from({ length: LAD_N }, (_, i) => LAD_LO * (LAD_HI / LAD_LO) ** (i / (LAD_N - 1)));
+const ladderView = { playhead: null, which: null, render: () => drawStep2() };
+function drawStep2() {
+  const { ctx, w, h } = prep($("c-ladder")), c = colors(), left = 8, right = w - 12, fmax = 7000;
+  const X = f => left + (f / fmax) * (right - left);
+  const rows = [[ladHz, "Equal steps in Hz", "hz"], [ladRatio, "Equal ratios", "ratio"]];
+  const playing = ladderView.playhead == null ? -1 : Math.floor(ladderView.playhead / (LAD_DUR + LAD_GAP));
+  rows.forEach(([fs, label, key], r) => {
+    const y = 26 + r * 38;
+    ctx.fillStyle = c.muted; ctx.font = `600 11px ${c.ui}`; ctx.textAlign = "left"; ctx.fillText(label, left, y - 10);
+    ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
+    fs.forEach((f, i) => {
+      const on = ladderView.which === key && i === playing;
+      ctx.fillStyle = on ? c.alias : c.accent;
+      ctx.beginPath(); ctx.arc(X(f), y, on ? 6 : 4.5, 0, TAU); ctx.fill();
+    });
+  });
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+  for (const f of [0, 1000, 2000, 3000, 4000, 5000, 7000]) {
+    ctx.textAlign = f === 0 ? "left" : f === 7000 ? "right" : "center";
+    ctx.fillText(f === 7000 ? "7,000 Hz" : f.toLocaleString("en-US"), X(f), h - 2);
+  }
+  const ratios = fs => fs.slice(1).map((f, i) => (f / fs[i]).toFixed(2)).join(", ");
+  $("r-ladder").innerHTML = `Each step's ratio, equal Hz: <span class="num">${ratios(ladHz)}</span>. Equal ratios: <span class="num">${ratios(ladRatio)}</span>.`;
+}
+function playLadder(fs, key, message) {
+  ladderView.which = key;
+  play(notes(fs, LAD_DUR, LAD_GAP), TONE_SR, $("st-ladder"), message, ladderView);
+}
+$("p-ladHz").addEventListener("click", () => playLadder(ladHz, "hz", "Playing equal steps in Hz."));
+$("p-ladMel").addEventListener("click", () => playLadder(ladRatio, "ratio", "Playing equal ratios."));
+
+// ---------- Step 3: the curve ----------
+let curveF = 300;
+function drawStep3() {
+  const { ctx, w, h } = prep($("c-curve")), c = colors();
+  const left = 40, right = w - 10, top = 10, bottom = h - 20, fmax = 8000, mmax = 3000;
+  const X = f => left + (f / fmax) * (right - left), Y = m => bottom - (m / mmax) * (bottom - top);
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+  for (const m of [1000, 2000, 3000]) { ctx.beginPath(); ctx.moveTo(left, Y(m)); ctx.lineTo(right, Y(m)); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); ctx.moveTo(left, top); ctx.lineTo(left, bottom); ctx.stroke();
+  ctx.strokeStyle = c.muted; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(mmax), Y(mmax)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = c.accent; ctx.lineWidth = 2.5; ctx.beginPath();
+  for (let f = 0; f <= fmax; f += 20) f ? ctx.lineTo(X(f), Y(hzToMel(f))) : ctx.moveTo(X(f), Y(0));
+  ctx.stroke();
+  // The point, and what 100 Hz more is worth here.
+  const m0 = hzToMel(curveF), m1 = hzToMel(curveF + 100);
+  ctx.strokeStyle = c.alias; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(X(curveF), bottom); ctx.lineTo(X(curveF), Y(m0)); ctx.lineTo(left, Y(m0)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = c.alias; ctx.beginPath(); ctx.arc(X(curveF), Y(m0), 5, 0, TAU); ctx.fill();
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`; ctx.textAlign = "right";
+  for (const m of [0, 1000, 2000, 3000]) ctx.fillText(m.toLocaleString("en-US"), left - 4, Y(m) + 4);
+  ctx.save(); ctx.translate(11, (top + bottom) / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = "center"; ctx.fillText("mels", 0, 0); ctx.restore();
+  for (const f of [0, 2000, 4000, 8000]) {
+    ctx.textAlign = f === 0 ? "left" : f === 8000 ? "right" : "center";
+    ctx.fillText(f === 8000 ? "8,000 Hz" : f.toLocaleString("en-US"), X(f), h - 4);
+  }
+  $("o-curve").textContent = fmt(curveF);
+  $("r-curve").innerHTML = `<span class="num">${fmt(curveF)}</span> is <span class="num">${num(m0)}</span> mels. Going up 100 Hz from here adds <span class="num">${num(m1 - m0)}</span> mels. Doubling to <span class="num">${fmt(2 * curveF)}</span> adds <span class="num">${num(hzToMel(2 * curveF) - m0)}</span>.`;
+}
+$("i-curve").addEventListener("input", e => { curveF = +e.target.value; drawStep3(); });
+
+// ---------- The voice ----------
+const VOICE_SR = 16000, N_FFT = 512, HOP = 128;
+const voice = (() => {
+  const bin = atob("/*VOICE_B64*/"), n = bin.length >> 1, out = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); if (v >= 32768) v -= 65536; out[i] = v / 32768; }
+  return out;
+})();
+const VOICE_DUR = voice.length / VOICE_SR;
+const spec = stft(voice, N_FFT, HOP);
+const binHz = k => k * VOICE_SR / N_FFT;
+const banks = {};
+const bank = n => banks[n] ??= filterbank(VOICE_SR, N_FFT, n);
+const melSpecs = {};
+const melSpec = n => melSpecs[n] ??= spec.frames.map(f => applyBank(bank(n), f));
+let specPeak = 0;
+for (const f of spec.frames) for (const v of f) specPeak = Math.max(specPeak, v);
+
+// ---------- Step 4: rows per region ----------
+const binFreqs = Array.from({ length: N_FFT / 2 + 1 }, (_, k) => binHz(k));
+function drawStep4() { drawRows($("c-rows1"), [{ label: "Plain spectrogram: 257 rows", counts: rowCounts(binFreqs) }]); }
+
+// ---------- Step 5: the filterbank ----------
+let bankN = 40, bankAxis = "hz", bankB = 12;
+function drawStep5() {
+  const fb = bank(bankN), { ctx, w, h } = prep($("c-bank")), c = colors();
+  const left = 8, right = w - 8, top = 10, bottom = h - 20, fmax = VOICE_SR / 2, mmax = hzToMel(fmax);
+  const X = f => left + (bankAxis === "mel" ? hzToMel(f) / mmax : f / fmax) * (right - left);
+  const Y = v => bottom - v * (bottom - top);
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+  const e = fb.edges;
+  for (let b = 0; b < fb.n; b++) {
+    const sel = b === bankB;
+    ctx.beginPath(); ctx.moveTo(X(e[b]), Y(0)); ctx.lineTo(X(e[b + 1]), Y(1)); ctx.lineTo(X(e[b + 2]), Y(0));
+    if (sel) { ctx.fillStyle = c.aliasSoft; ctx.fill(); }
+    ctx.strokeStyle = sel ? c.alias : c.accent; ctx.lineWidth = sel ? 2.5 : 1; ctx.globalAlpha = sel ? 1 : 0.6; ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+  const ticks = bankAxis === "mel" ? [0, 500, 1000, 2000, 4000, 8000] : [0, 2000, 4000, 6000, 8000];
+  let prevRight = -Infinity;
+  for (const f of ticks) {
+    const label = f === 8000 ? "8,000 Hz" : f.toLocaleString("en-US"), tw = ctx.measureText(label).width;
+    let x = f === 0 ? left : f === 8000 ? right - tw : X(f) - tw / 2;
+    if (x < prevRight + 6) continue;
+    ctx.textAlign = "left"; ctx.fillText(label, x, h - 4); prevRight = x + tw;
+  }
+  for (const b of $("b-nmels").children) b.setAttribute("aria-pressed", String(+b.dataset.n === bankN));
+  for (const b of $("b-axis").children) b.setAttribute("aria-pressed", String(b.dataset.a === bankAxis));
+  $("o-band").textContent = `${bankB + 1} of ${bankN}`;
+  const lo = e[bankB], mid = e[bankB + 1], hi = e[bankB + 2];
+  const rows = fb.tri[bankB].filter(v => v > 0).length;
+  $("r-bank").innerHTML = `Band <span class="num">${bankB + 1}</span>: centre <span class="num">${fmt(mid)}</span>, from <span class="num">${fmt(lo)}</span> to <span class="num">${fmt(hi)}</span> (<span class="num">${fmt(hi - lo)}</span> wide), so it averages <span class="num">${rows}</span> ${rows === 1 ? "row" : "rows"} of the plain spectrogram.`;
+  drawRows($("c-rows2"), [
+    { label: "Plain spectrogram: 257 rows", counts: rowCounts(binFreqs) },
+    { label: `Mel spectrogram: ${bankN} bands (by centre)`, counts: rowCounts(e.slice(1, -1)) },
+  ]);
+}
+$("b-nmels").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const frac = (bankB + 0.5) / bankN; bankN = +b.dataset.n; bankB = Math.min(bankN - 1, Math.floor(frac * bankN));
+  $("i-band").max = bankN - 1; $("i-band").value = bankB; drawStep5();
+});
+$("b-axis").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; bankAxis = b.dataset.a; drawStep5(); });
+$("i-band").addEventListener("input", e => { bankB = +e.target.value; drawStep5(); });
+
+// ---------- Step 6: one frame ----------
+const FRAME_T = 0.75, frameIdx = Math.round(FRAME_T * VOICE_SR / HOP);
+let fBand = 10, zoom = 8000;
+function drawStep6() {
+  const fb = bank(80), mag = spec.frames[frameIdx], bands = melSpec(80)[frameIdx], c = colors();
+  let peak = 0; for (const v of mag) peak = Math.max(peak, v);
+  const db = v => Math.max(0, (20 * Math.log10(v / peak + 1e-12) + 70) / 70);   // 0..1 for -70..0 dB
+  {
+    const { ctx, w, h } = prep($("c-frame")), left = 8, right = w - 8, top = 8, bottom = h - 18;
+    const X = f => left + (f / zoom) * (right - left), Y = v => bottom - v * (bottom - top);
+    const tri = fb.tri[fBand], bw = Math.max(1, (X(binHz(1)) - X(0)) * 0.8);
+    ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+    for (let k = 0; binHz(k) <= zoom; k++) {
+      const under = tri[k] > 0;
+      ctx.fillStyle = under ? c.alias : c.accent; ctx.globalAlpha = under ? 1 : 0.55;
+      const y = Y(db(mag[k])); ctx.fillRect(X(binHz(k)) - bw / 2, y, bw, bottom - y);
+    }
+    ctx.globalAlpha = 1;
+    const e = fb.edges;
+    ctx.strokeStyle = c.alias; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(X(e[fBand]), Y(0)); ctx.lineTo(X(e[fBand + 1]), Y(1)); ctx.lineTo(X(e[fBand + 2]), Y(0)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+    const ticks = zoom === 8000 ? [0, 2000, 4000, 6000, 8000] : [0, 500, 1000, 1500, 2000];
+    for (const f of ticks) {
+      ctx.textAlign = f === 0 ? "left" : f === zoom ? "right" : "center";
+      ctx.fillText(f === zoom ? `${f.toLocaleString("en-US")} Hz` : f.toLocaleString("en-US"), X(f), h - 2);
+    }
+  }
+  {
+    const { ctx, w, h } = prep($("c-melframe")), left = 8, right = w - 8, top = 6, bottom = h - 18;
+    const step = (right - left) / 80, Y = v => bottom - v * (bottom - top);
+    let bpeak = 0; for (const v of bands) bpeak = Math.max(bpeak, v);
+    ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+    bands.forEach((v, b) => {
+      ctx.fillStyle = b === fBand ? c.alias : c.accent; ctx.globalAlpha = b === fBand ? 1 : 0.55;
+      const y = Y(Math.max(0, (20 * Math.log10(v / peak + 1e-12) + 70) / 70)); ctx.fillRect(left + b * step + 0.5, y, Math.max(1, step - 1), bottom - y);
+    });
+    ctx.globalAlpha = 1; ctx.fillStyle = c.muted; ctx.font = `11px ${c.mono}`;
+    ctx.textAlign = "left"; ctx.fillText("band 1", left, h - 2);
+    ctx.textAlign = "right"; ctx.fillText("band 80", right, h - 2);
+  }
+  for (const b of $("b-zoom").children) b.setAttribute("aria-pressed", String(+b.dataset.z === zoom));
+  const rows = fb.tri[fBand].filter(v => v > 0).length, centre = fb.edges[fBand + 1];
+  $("o-fband").textContent = `${fBand + 1} of 80`;
+  $("r-frame").innerHTML = `Band <span class="num">${fBand + 1}</span>, centred on <span class="num">${fmt(centre)}</span>, averages <span class="num">${rows}</span> ${rows === 1 ? "row" : "rows"}, weighted by the triangle: <span class="num">${num(20 * Math.log10(bands[fBand] / peak + 1e-12), 0).replace("-", "−")}</span> dB.`;
+}
+$("i-fband").addEventListener("input", e => {
+  fBand = +e.target.value;
+  if (bank(80).edges[fBand + 2] > zoom) zoom = 8000;
+  drawStep6();
+});
+$("b-zoom").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; zoom = +b.dataset.z;
+  if (zoom === 2000 && bank(80).edges[fBand + 2] > 2000) { fBand = 20; $("i-fband").value = fBand; }
+  drawStep6();
+});
+
+// ---------- Step 7: plain vs mel ----------
+const viewVoice = new HeatView($("c-voice"));
+let voiceMode = "mel";
+function drawStep7() {
+  if (voiceMode === "mel") viewVoice.set(melSpec(80), { dur: VOICE_DUR, ticks: melTicks(80, 8000), peak: 0 });
+  else viewVoice.set(spec.frames, { dur: VOICE_DUR, ticks: plainTicks(8000), peak: specPeak });
+  for (const b of $("b-voice").children) b.setAttribute("aria-pressed", String(b.dataset.v === voiceMode));
+}
+$("b-voice").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; voiceMode = b.dataset.v; drawStep7(); });
+$("p-voice").addEventListener("click", () => play(voice, VOICE_SR, $("st-voice"), "Playing the voice.", viewVoice));
+
+// ---------- Step 8: rebuild from bands ----------
+// Every version shares one set of random phases, so the only difference between them is the bands.
+const phases = (() => {
+  let seed = 12345;
+  const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  return spec.frames.map(() => Float64Array.from({ length: N_FFT / 2 + 1 }, () => TAU * rand()));
+})();
+const spreads = {}, rebuilds = {};
+const spread = n => spreads[n] ??= n === 0 ? spec.frames : melSpec(n).map(f => spreadBack(bank(n), f, N_FFT / 2 + 1));
+const rebuild = n => rebuilds[n] ??= istft({ ...spec, frames: spread(n) }, (k, m) => phases[m][k]);
+// How closely 40 ms stretches of the vowel match themselves one pitch period later (lags for 80–400 Hz).
+function pitchStrength(y, t0 = 0.57, t1 = 0.96) {
+  const seg = y.subarray(Math.round(t0 * VOICE_SR), Math.round(t1 * VOICE_SR)), W = 640, scores = [];
+  for (let s = 0; s + W <= seg.length; s += 320) {
+    let mean = 0; for (let i = 0; i < W; i++) mean += seg[s + i]; mean /= W;
+    const f = Float64Array.from({ length: W }, (_, i) => seg[s + i] - mean);
+    let e0 = 0; for (let i = 0; i < W; i++) e0 += f[i] * f[i];
+    if (e0 <= 0) continue;
+    let best = -Infinity;
+    for (let lag = VOICE_SR / 400; lag < VOICE_SR / 80; lag++) { let a = 0; for (let i = 0; i + lag < W; i++) a += f[i] * f[i + lag]; best = Math.max(best, a); }
+    scores.push(best / e0);
+  }
+  return scores.reduce((a, b) => a + b, 0) / scores.length;
+}
+const viewSpread = new HeatView($("c-spread"));
+let spreadN = 80;
+function drawStep8() {
+  viewSpread.set(spread(spreadN), { dur: VOICE_DUR, ticks: plainTicks(8000), peak: specPeak });
+  for (const b of $("b-spread").children) b.setAttribute("aria-pressed", String(+b.dataset.n === spreadN));
+  const what = spreadN === 0 ? "all 257 rows" : `${spreadN} bands`;
+  $("l-spread").textContent = spreadN === 0 ? "All 257 rows, as lesson 3 drew them" : `${spreadN} bands, spread back over the 257 rows`;
+  $("p-spread").textContent = `Play: ${what}, random phase`;
+  if (visible($("r-spread"))) {
+    const ps = n => num(pitchStrength(rebuild(n)), 2);
+    $("r-spread").innerHTML = `Pitch strength on the vowel: original <span class="num">${num(pitchStrength(voice), 2)}</span>; all 257 rows <span class="num">${ps(0)}</span>; ${[80, 40, 20, 10].map(n => `${n} bands <span class="num">${ps(n)}</span>`).join("; ")}.`;
+  }
+}
+$("b-spread").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; spreadN = +b.dataset.n; drawStep8(); });
+$("p-spread").addEventListener("click", () => play(rebuild(spreadN), VOICE_SR, $("st-spread"),
+  `Playing ${spreadN === 0 ? "all 257 rows" : `${spreadN} bands`}, random phase.`, viewSpread));
+$("p-orig").addEventListener("click", () => play(voice, VOICE_SR, $("st-spread"), "Playing the original.", viewSpread));
+
+// Figures inside a reveal are drawn when it opens.
+for (const d of document.querySelectorAll("details.predict")) d.addEventListener("toggle", () => { if (d.open) redraw(); });
+
+function drawAll() { drawStep2(); drawStep3(); drawStep4(); drawStep5(); drawStep6(); drawStep7(); drawStep8(); }
+let raf = 0;
+const redraw = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(drawAll); };
+window.addEventListener("resize", redraw);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { for (const v of [viewVoice, viewSpread]) v.image = null; redraw(); });
+new MutationObserver(() => { for (const v of [viewVoice, viewSpread]) v.image = null; redraw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+drawAll();
+</script>

@@ -11,6 +11,7 @@ then republish to the same URL so links in the notes keep working.
 | `lesson-03-stft.html` | https://claude.ai/artifact/Q6vLsTectqLmXyoiAUJ1yZ | Lesson 3: windows, the STFT and spectrograms, ending with a real voice. Built by `src/build_lesson_03.py` (embeds the clip in `src/assets/`) |
 | `code-03-stft.html` | https://claude.ai/artifact/C9tFogjcM8wvoDmc67rPef | Lesson 3's code, read line by line, with real outputs. Built by `src/build_code_03.py` |
 | `lab-03-beats.html` | https://claude.ai/artifact/1xU1TcKeu2aVZtDqkAftRK | Experiment for lesson 3: two close tones at three frame lengths. Built by `src/build_lab_03_beats.py` |
+| `lesson-04-mel.html` | https://claude.ai/artifact/4jnRjFihRrhHgM1i8XqFZN | Lesson 4: the mel scale and mel spectrograms, ending with a voice rebuilt from fewer bands. Built by `src/build_lesson_04.py` (embeds the clip in `src/assets/`) |
 | `aliasing-lab.html` | https://claude.ai/artifact/HNEgSgSjcnwo9fAVQivseJ | Playground for lesson 1: any tone at any sample rate |
 
 The plan itself is at https://claude.ai/artifact/ExAUhat1xmLmzwM5tV3ZCE.

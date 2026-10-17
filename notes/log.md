@@ -2,6 +2,28 @@
 
 Newest entry first.
 
+## Week 4: lesson 4 ready
+
+- Lesson 4, the mel scale and mel spectrograms, as an interactive page
+  (`pages/lesson-04-mel.html`): equal hertz gaps sound unequal; equal
+  ratios sound even; the mel curve; where a spectrogram spends its rows
+  (129 of 257 on 4–8 kHz); triangle filterbanks; one frame band by band;
+  the voice as a mel spectrogram; rebuilding from 80, 40, 20 and 10 bands.
+  Four predictions are asked for in chat before their reveals. Notes and
+  derivations in `notes/lessons/04-mel-spectrograms.md`.
+- Code: `src/sfs/mel.py` (`hz_to_mel`, `mel_to_hz`, `mel_band_edges`,
+  `mel_filterbank`, `mel_spectrogram`, `log_mel`, `mel_to_linear`). Tests
+  check what the theory predicts: 1,000 Hz is 1,000 mels, the bend from
+  even-in-hertz to even-in-ratios, triangles summing to 1, 200/300 Hz in
+  different bands but 6,000/6,100 Hz in one, and a match with librosa's
+  HTK filterbank (to 3e-8).
+- Measured: pitch strength on the vowel with shared random phase was 0.60
+  for all 257 rows, 0.55 for 80 bands, 0.44 for 40, 0.28 for 20, 0.19 for 10.
+
+Not yet built: a code walkthrough page for `mel.py`.
+
+Next: work through the page, predictions first. Then Griffin-Lim.
+
 ## Week 3: lesson 3 done
 
 - Worked through lesson 3, the Two Close Tones experiment and the notes.
