@@ -2,6 +2,26 @@
 
 Newest entry first.
 
+## Week 3: lesson 3 done
+
+- Worked through lesson 3, the Two Close Tones experiment and the notes.
+  Asked for a plain explanation of the time–frequency tradeoff; the
+  two-runners picture (two close frequencies need time to drift apart)
+  plus the beats experiment answered it.
+- Exercise 1: recorded "aah" then "eee" at one pitch in Voice Memos.
+  Measured with `sfs.stft`: pitch about 105 Hz in both (stripes unchanged);
+  formants moved from about 640 / 1,080 Hz (aah) to 300 / 2,190 Hz (eee),
+  close to textbook values. Shown on a private page; the recording stays in
+  `outputs/` and is not in the repo or on the public site.
+- Practical: Voice Memos recordings reach the session through Share → Save
+  to Files, then attaching the .m4a. `imageio-ffmpeg` decodes them.
+
+Open: no predictions were written down before the reveals this time, so
+start lesson 4 by asking for them explicitly.
+
+Next: lesson 4, the mel scale and mel spectrograms. Then the source–filter
+vowel synthesizer, using the formants measured here.
+
 ## Week 3: lesson 3 ready
 
 - Lesson 3, windows, the STFT and spectrograms, as an interactive page
