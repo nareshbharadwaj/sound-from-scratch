@@ -16,6 +16,13 @@ Newest entry first.
 - Practical: Voice Memos recordings reach the session through Share → Save
   to Files, then attaching the .m4a. `imageio-ffmpeg` decodes them.
 
+- Step 9 (random phase) sounded "recognizable but echoed", as expected.
+  Exercise 5: predicted 128 ms frames would echo most. Right, but the
+  reason given was a "wider frequency band"; corrected to: every frame
+  length covers the same band, and the echo comes from the frame's length
+  in time. Measured: 128 ms keeps pitch (clarity 0.51) but smears timing
+  (0.88); 8 ms keeps timing (0.97) but loses pitch (0.23, whispery).
+
 Open: no predictions were written down before the reveals this time, so
 start lesson 4 by asking for them explicitly.
 
